@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="130dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    android:background="#9C9C9C">
+
+    <ImageView
+        android:id="@+id/imageGridView"
+        android:layout_width="match_parent"
+        android:layout_height="140dp"
+        android:scaleType="centerCrop"/>
+
+    <TextView
+        android:id="@+id/nameGridTextView"
+        android:layout_margin="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:text="Name"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        android:layout_gravity="center"
+        android:gravity="center"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+
+        <TextView
+            android:id="@+id/seriesGridTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:text="6 dizi"
+            android:textSize="16sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <ImageView
+            android:id="@+id/starGridView"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="3dp"
+            android:src="@android:drawable/btn_star_big_off"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>
