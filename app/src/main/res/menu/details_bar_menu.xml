@@ -4,7 +4,12 @@
 
     <item
         app:actionViewClass="android.widget.Button"
-        android:id="@+id/favoriButon"
-        android:title="Favorilere ekle"/>
+        android:id="@+id/favoriButonu"
+        android:title="@string/add_fav"/>
+
+    <item
+        app:actionViewClass="android.widget.Button"
+        android:id="@+id/yerelButonu"
+        android:title="@string/add_local"/>
 
 </menu>

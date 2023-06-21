@@ -12,9 +12,7 @@
         android:id="@+id/imageView"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:scaleType="centerCrop">
-
-    </ImageView>
+        android:scaleType="centerCrop"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -46,22 +44,21 @@
                 android:id="@+id/seriesTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:paddingStart="4dp"
+                android:paddingStart="10dp"
                 android:paddingEnd="4dp"
-                android:text="Dizi Sayısı: "
+                android:text="Number of series: "
                 android:textAlignment="textStart"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-            </TextView>
+                app:layout_constraintTop_toTopOf="parent"/>
 
             <ImageView
                 android:id="@+id/starView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@android:drawable/btn_star_big_off"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_margin="3dp"
+                android:src="@drawable/star_hollow"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 

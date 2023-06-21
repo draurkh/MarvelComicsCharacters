@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Marvel Comics Characters</string>
+    <string name="add_local">Add to saved characters</string>
+    <string name="rm_local">Remove from saved characters</string>
+    <string name="add_fav">Add to favourites</string>
+    <string name="rm_fav">Remove from favourites</string>
 </resources>

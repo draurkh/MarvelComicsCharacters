@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId "com.talhakumru.marvelcomicsapp"
-        minSdk 23
+        minSdk 24
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -29,7 +29,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
     buildFeatures {
@@ -38,6 +38,7 @@ android {
 
 }
 def room_version = "2.5.1"
+//def lifecycle_version = "2.6.1"
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
@@ -47,7 +48,31 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    // Room
     implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version"
+
+
+    // OkHTTP
+    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.11'
+
+    // Gson
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Coil
+    implementation 'io.coil-kt:coil:2.4.0'
+/*
+    // Lifecycle components
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
+
+    // Kotlin components
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1'*/
 
 }
