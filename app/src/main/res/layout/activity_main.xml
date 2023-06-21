@@ -28,18 +28,35 @@
         app:layout_constraintTop_toBottomOf="@+id/appToolbar"
         app:layout_constraintVertical_bias="0.0" />
 
-    <ImageButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/layoutButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        app:fabSize="auto"
+        android:contentDescription="Toggle Layout"
+        android:clickable="true"
+        android:focusable="true"
+        android:onClick="toggleLayout"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/view_list" />
+
+
+    <!--<ImageButton
         android:id="@+id/layoutButton"
         android:layout_width="70dp"
         android:layout_height="70dp"
         android:onClick="toggleLayout"
-        android:contentDescription="toggleLayout"
+        android:contentDescription="Toggle Layout"
         android:src="@drawable/list_layout"
         app:tint="@color/black"
+        android:elevation="4dp"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />-->
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
