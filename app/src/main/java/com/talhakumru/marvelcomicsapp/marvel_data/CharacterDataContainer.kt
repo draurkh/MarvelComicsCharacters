@@ -1,6 +1,7 @@
 package com.talhakumru.marvelcomicsapp.marvel_data
 
+import com.talhakumru.marvelcomicsapp.local_data.Character
+
 class CharacterDataContainer {
-    var total : Int = 0
     var results = ArrayList<Character>()
 }

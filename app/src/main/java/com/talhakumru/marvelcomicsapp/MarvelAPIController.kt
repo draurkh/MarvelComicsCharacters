@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.JsonReader
 import com.google.gson.Gson
+import com.talhakumru.marvelcomicsapp.local_data.Character
 import com.talhakumru.marvelcomicsapp.marvel_data.CharacterDataWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,9 +26,10 @@ class MarvelAPIController {
     val baseUrl = "http://gateway.marvel.com/v1/public"
     val publicKey = "2c0eb6a33651d7791e7da24edce19abe"
     val privateKey = "8c2f56fd47a13acb17ee127e59ebcc54552a04a7"
+    var minNumber = 0
     val httpClient = OkHttpClient()
-    var dataWrapper = CharacterDataWrapper()
-    //var list = ArrayList<Character_old>()
+    val dataWrapper = CharacterDataWrapper()
+
 
 /*
     fun getCharacters(filters : String) {
@@ -125,6 +127,10 @@ class MarvelAPIController {
                 response.use {
                     val json = response.body.source().inputStream().reader()
                     dataWrapper.append(gson.fromJson(json, CharacterDataWrapper::class.java))
+                    if (dataWrapper.data.results.size < minNumber) {
+                        println("Screen is too big")
+                        getGson("?offset=${dataWrapper.data.results.size}&limit=${100}&")
+                    }
                     /*println("Size: ${dataWrapper.data.results.size}")
                     for (item in dataWrapper.data.results) {
                         println("Name: ${item.name}")

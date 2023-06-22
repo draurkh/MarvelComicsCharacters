@@ -9,96 +9,89 @@ import android.view.View
 import android.widget.SearchView
 import android.widget.SearchView.OnCloseListener
 import android.widget.SearchView.OnQueryTextListener
+import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.talhakumru.marvelcomicsapp.databinding.ActivityMainBinding
+import com.talhakumru.marvelcomicsapp.local_data.Character
 import com.talhakumru.marvelcomicsapp.local_data.CharacterViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+    // use View Binding
+    private lateinit var binding : ActivityMainBinding
     private var appBar : ActionBar? = null
 
-    //private var selectedLayout = R.drawable.view_list
+    val displayMetrics = Resources.getSystem().displayMetrics
 
-    val deviceMetrics = Resources.getSystem().displayMetrics
+    val gridCols = calculateGridColumnCount()
+    var gridLayoutManager = GridLayoutManager(this, 1)
+    var adapter = RecyclerViewAdapter(gridLayoutManager)
 
-    lateinit var linearLayoutManager : LinearLayoutManager
-    lateinit var gridLayoutManager : GridLayoutManager
-    private val adapter = RecyclerListAdapter()
-
-    // create a MarvelAPIController to fetch data
-    val marvelAPIController = MarvelAPIController()
-
-    //lateinit var recyclerListAdapter : RecyclerListAdapter
-    //lateinit var recyclerGridAdapter : RecyclerListAdapter
-
-    lateinit var onScrollListener : RecyclerScrollListener
-
+    // character list, shown by recycler view
+    var characters = ArrayList<Character>()
+    // holds the previous size of characters array if it is updated
     var listSize : Int = 0
 
+    // create a MarvelAPIController to fetch data
+    val apiController = MarvelAPIController()
+
+    // first fetched data must fit to 4 screens to enable scrolling
+    val listCardPerPage = (displayMetrics.heightPixels / (displayMetrics.density * 150)).roundToInt()
+    val minNumberOfFirstFetch = 4 * listCardPerPage
+
+    // listens to scroll events
+    lateinit var onScrollListener : RecyclerScrollListener
+
+    // runs every second
     lateinit var mainHandler : Handler
     private val updateTask = object : Runnable {
         override fun run() {
             listingTask()
-            mainHandler.postDelayed(this, 3000)
+            mainHandler.postDelayed(this, 1000)
         }
     }
 
-    //private lateinit var characterViewModel : CharacterViewModel
-    //private var localCharacters = ArrayList<Character>()
+    // accesses app database
+    val characterViewModel : CharacterViewModel by viewModels()
+    var localCharacters = emptyList<Character>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        println("MainActivity OnCreate is called.")
+        println(listCardPerPage)
+        println(minNumberOfFirstFetch)
+        println("MainActivity.OnCreate is called.")
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
         // set toolbar as appbar of the activity
         setSupportActionBar(findViewById(R.id.appToolbar))
         appBar = supportActionBar
 
-        // RecyclerView Layout Managers
-        // Linear(list) and Grid layouts
-        val gridCols = calculateGridColumnCount()
-        linearLayoutManager = LinearLayoutManager(this)
-        gridLayoutManager = GridLayoutManager(this, gridCols)
-        binding.recyclerView.layoutManager = linearLayoutManager
-
-        // RecyclerView Adapter
+        binding.recyclerView.layoutManager = gridLayoutManager
         binding.recyclerView.adapter = adapter
 
-        // Character View Model
-        // Local characters are shown at the top of RecyclerView
-
-        val characterViewModel = ViewModelProvider(this).get(CharacterViewModel::class.java)
-        characterViewModel.readAll.observe(this, Observer { characters ->
-            adapter.setList(characters)
+        characterViewModel.readAll.observe(this, Observer { localList ->
+            // update the array at every update in database
+            localCharacters = localList
+            if (apiController.dataWrapper.data.results.isEmpty()) {
+                // show local characters when online data is not available
+                characters = localList as ArrayList<Character>
+            }
         })
 
+        onScrollListener = RecyclerScrollListener(apiController, minNumberOfFirstFetch, displayMetrics)
 
+        // fetch first items to initiate scrolling
+        apiController.minNumber = minNumberOfFirstFetch
         val filters = "?limit=100&"
         getCharacters(filters)
 
-
-        //recyclerListAdapter = RecyclerListAdapter(R.drawable.view_list)
-        //recyclerGridAdapter = RecyclerListAdapter(R.drawable.view_grid)
-        //binding.recyclerView.adapter = recyclerListAdapter
-
-        onScrollListener = RecyclerScrollListener(marvelAPIController, deviceMetrics)
         binding.recyclerView.addOnScrollListener(onScrollListener)
 
         mainHandler = Handler(Looper.getMainLooper())
@@ -108,7 +101,7 @@ class MainActivity : AppCompatActivity() {
 
     fun getCharacters(filter : String) {
         println("getCharacters entered")
-        marvelAPIController.getGson(filter)
+        apiController.getGson(filter)
         println("getCharacters exited")
     }
 
@@ -126,7 +119,7 @@ class MainActivity : AppCompatActivity() {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 println("text submitted")
                 mainHandler.removeCallbacks(updateTask)
-                marvelAPIController.dataWrapper.data.results.clear()
+                apiController.dataWrapper.data.results.clear()
                 listSize = 0
                 mainHandler.post(updateTask)
                 //marvelAPIController.getCharacters("?nameStartsWith=${query}&")
@@ -157,18 +150,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun listingTask() {
-        if (marvelAPIController.dataWrapper.data.results.size != listSize) {
+        val marvelList = apiController.dataWrapper.data.results
+        /*if (marvelList.isEmpty()) {
+            // load 4 pages of characters when available
+            var numOfFirstFetch : Int = if (adapter.mode == R.drawable.view_list) 4 * onScrollListener.listCardPerPage
+            else 4 * onScrollListener.gridCardPerPage
+            val numOfRequests : Int = (numOfFirstFetch / 100.0).toInt()
+
+            lifecycleScope.launch() {
+                for (i in 0..numOfRequests) {
+                    val task = launch { getCharacters("?offset=${i * 100}&limit=${100}&") }
+                    task.await()
+                }
+            }
+            adapter.setList(marvelList)
+            listSize = marvelList.size
+        }*/
+        if (marvelList.size != listSize) {
             println("dataset changed")
-            //adapter.addToList(marvelAPIController.dataWrapper.data.results)
-            adapter.notifyDataSetChanged()
-            listSize = marvelAPIController.dataWrapper.data.results.size
+            //adapter.addToList(marvelList)
+            adapter.setList(marvelList)
+            listSize = marvelList.size
             println("size: ${adapter.itemCount}")
-            println("Size: ${marvelAPIController.dataWrapper.data.results.size}")
+            println("Size: ${marvelList.size}")
         }
     }
 
     fun toggleLayout(view: View) {
-        when (adapter.mode) {
+        /*when (adapter.mode) {
             R.drawable.view_list -> {
                 adapter.mode = R.drawable.view_grid
                 binding.recyclerView.layoutManager = gridLayoutManager
@@ -184,8 +193,18 @@ class MainActivity : AppCompatActivity() {
                 scrollToYfromGridToList()
                 //binding.recyclerView.scrollBy(0, onScrollListener.yPos)
             }
+        }*/
+
+        if (gridLayoutManager.spanCount == 1) {
+            gridLayoutManager.spanCount = gridCols
+            binding.layoutButton.setImageResource(R.drawable.view_grid)
         }
-        binding.layoutButton.setImageResource(adapter.mode)
+        else {
+            gridLayoutManager.spanCount = 1
+            binding.layoutButton.setImageResource(R.drawable.view_list)
+        }
+        adapter.notifyItemRangeChanged(0, adapter.itemCount)
+
 
 /*
         binding.recyclerView.removeOnScrollListener(onScrollListener)
@@ -194,8 +213,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun calculateGridColumnCount() : Int {
-        val gridCardWidthPixels = deviceMetrics.density * 125
-        return (deviceMetrics.widthPixels / gridCardWidthPixels).roundToInt()
+        val gridCardWidthPixels = displayMetrics.density * 125
+        return (displayMetrics.widthPixels / gridCardWidthPixels).roundToInt()
         //val displayWidth = deviceMetrics.widthPixels / deviceMetrics.density
         //val gridCardWidth = 125
         //return (displayWidth / gridCardWidth).roundToInt()

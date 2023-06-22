@@ -6,42 +6,42 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.google.gson.Gson
 import com.talhakumru.marvelcomicsapp.local_data.Character
 
-class RecyclerListAdapter() : RecyclerView.Adapter<RecyclerListAdapter.CharacterCardVH>() {
+class RecyclerViewAdapter(private val layoutManager : GridLayoutManager) : RecyclerView.Adapter<RecyclerViewAdapter.CharacterCardVH>() {
 
     private var list = ArrayList<Character>()
-    var mode = R.drawable.view_list
 
-    class CharacterCardVH(itemView : View, mode : Int) : RecyclerView.ViewHolder(itemView) {
+    class CharacterCardVH(itemView : View, spanCount : Int) : RecyclerView.ViewHolder(itemView) {
         val nameTextView : TextView
         val seriesTextView : TextView
         val imageView : ImageView
         val starView : ImageView
 
         init {
-            when (mode) {
-                R.drawable.view_grid -> {
-                    nameTextView = itemView.findViewById(R.id.nameGridTextView)
-                    seriesTextView = itemView.findViewById(R.id.seriesGridTextView)
-                    imageView = itemView.findViewById(R.id.imageGridView)
-                    starView = itemView.findViewById(R.id.starGridView)
-                }
-                else -> {
+            when (spanCount) {
+                1 -> {
                     nameTextView = itemView.findViewById(R.id.nameTextView)
                     seriesTextView = itemView.findViewById(R.id.seriesTextView)
                     imageView = itemView.findViewById(R.id.imageView)
                     starView = itemView.findViewById(R.id.starView)
+                }
+                else -> {
+                    nameTextView = itemView.findViewById(R.id.nameGridTextView)
+                    seriesTextView = itemView.findViewById(R.id.seriesGridTextView)
+                    imageView = itemView.findViewById(R.id.imageGridView)
+                    starView = itemView.findViewById(R.id.starGridView)
                 }
             }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CharacterCardVH {
-        val itemView : View = if(mode == R.drawable.view_list) {
+        val itemView : View = if(layoutManager.spanCount == 1) {
             //println("changed to list layout")
             LayoutInflater.from(parent.context).inflate(R.layout.character_list_card, parent, false)
         } else {
@@ -49,7 +49,7 @@ class RecyclerListAdapter() : RecyclerView.Adapter<RecyclerListAdapter.Character
             LayoutInflater.from(parent.context).inflate(R.layout.character_grid_card, parent, false)
         }
 
-        return CharacterCardVH(itemView, mode)
+        return CharacterCardVH(itemView, layoutManager.spanCount)
     }
 
     override fun getItemCount(): Int {
@@ -59,16 +59,14 @@ class RecyclerListAdapter() : RecyclerView.Adapter<RecyclerListAdapter.Character
     override fun onBindViewHolder(holder: CharacterCardVH, position: Int) {
         //println("View Position: ${position}")
 
-        /*holder.nameTextView.text = characters[position].name
-        holder.seriesTextView.text = "${characters[position].series.available} Series"
+        holder.nameTextView.text = list[position].name
+        holder.seriesTextView.text = "${list[position].series.available} Series"
 
-
-        val isFavourite = favouriteDao.isFavourite(characters[position].id)
-        if (isFavourite == 1) holder.starView.setImageResource(R.drawable.star_filled)
+        if (list[position].isFavourite == 1) holder.starView.setImageResource(R.drawable.star_filled)
         else holder.starView.setImageResource(R.drawable.star_hollow)
 
         // check if the character is favourite
-        if (characters[position].isFavourite) holder.starView.setImageResource(R.drawable.star_filled)
+        /*if (characters[position].isFavourite) holder.starView.setImageResource(R.drawable.star_filled)
         else {
             try {
                 val fDatabase : SQLiteDatabase = openOrCreateDatabase("/data/data/com.talhakumru.marvelcomics/databases", null)
@@ -82,17 +80,11 @@ class RecyclerListAdapter() : RecyclerView.Adapter<RecyclerListAdapter.Character
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
-*/
+        }*/
 
 
-
-
-        val imageURL = list[position].imageURL
-        holder.imageView.load(imageURL) { this.crossfade(true) }
-
-        //val image = characters[position].thumbnail
-        //holder.imageView.load("${image.path}.${image.extension}") { this.crossfade(true) }
+        val image = list[position].thumbnail
+        holder.imageView.load("${image.path}.${image.extension}") { this.crossfade(true) }
 
 
         holder.itemView.setOnClickListener {
@@ -105,14 +97,27 @@ class RecyclerListAdapter() : RecyclerView.Adapter<RecyclerListAdapter.Character
         }
     }
 
-    fun setList(characters : List<Character>) {
-        this.list = characters as ArrayList<Character>
+    override fun getItemViewType(position: Int): Int {
+        val spanCount = layoutManager.spanCount
+        if (spanCount == 1) {
+            return R.drawable.view_list
+        }
+        else {
+            return R.drawable.view_grid
+        }
+
+    }
+
+    fun setList(characters : ArrayList<Character>) {
+        this.list = characters
         notifyDataSetChanged()
     }
 
-    fun addLocalToList(characters: ArrayList<Character>) {
-        val length = this.list.size + characters.size
-        this.list = ArrayList<Character>(this.list+this.list)
+    fun addToList(characters: ArrayList<Character>) {
+        for (character in characters) {
+            this.list.add(character)
+        }
+        notifyDataSetChanged()
     }
 
 }

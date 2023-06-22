@@ -27,11 +27,12 @@ class DetailsActivity : AppCompatActivity() {
         character = gson.fromJson(intent.getStringExtra("characterData"),Character::class.java)
 
 
+
         var seriesList = "<h2><b>Series</b></h2>"
         var storiesList = "<h2><b>Stories</b></h2>"
         var eventsList = "<h2><b>Events</b></h2>"
         var comicsList = "<h2><b>Comics</b></h2>"
-
+/*
         if (character.series.items.isEmpty()) seriesList = seriesList.plus("<p>This character is not included in any series.</p>")
         if (character.stories.items.isEmpty()) storiesList = storiesList.plus("<p>This character is not included in any stories.</p>")
         if (character.events.items.isEmpty()) eventsList = eventsList.plus("<p>This character is not included in any events.</p>")
@@ -53,10 +54,10 @@ class DetailsActivity : AppCompatActivity() {
         }
 
         val listText = Html.fromHtml(seriesList+storiesList+eventsList+comicsList, Html.FROM_HTML_SEPARATOR_LINE_BREAK_HEADING)
-
+*/
         binding.detailsNameView.text = character.name
         binding.detailsImageView.load("${character.thumbnail.path}.${character.thumbnail.extension}")
-        binding.detailsTextView.text = listText
+        //binding.detailsTextView.text = listText
         println("${character.id}: ${character.isFavourite}")
     }
 
@@ -115,5 +116,9 @@ class DetailsActivity : AppCompatActivity() {
             }
         }
         return super.onContextItemSelected(item)
+    }
+
+    fun getMedia() {
+
     }
 }
