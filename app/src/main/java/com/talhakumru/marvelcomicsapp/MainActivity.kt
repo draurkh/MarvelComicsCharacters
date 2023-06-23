@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
     private val updateTask = object : Runnable {
         override fun run() {
             listingTask()
-            mainHandler.postDelayed(this, 1000)
+            mainHandler.postDelayed(this, 500)
         }
     }
 
@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         characterViewModel.readAll.observe(this, Observer { localList ->
             // update the array at every update in database
             localCharacters = localList
-            if (apiController.dataWrapper.data.results.isEmpty()) {
+            if (MarvelAPIController.dataWrapper.data.results.isEmpty()) {
                 // show local characters when online data is not available
                 characters = localList as ArrayList<Character>
             }
@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity() {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 println("text submitted")
                 mainHandler.removeCallbacks(updateTask)
-                apiController.dataWrapper.data.results.clear()
+                MarvelAPIController.dataWrapper.data.results.clear()
                 listSize = 0
                 mainHandler.post(updateTask)
                 //marvelAPIController.getCharacters("?nameStartsWith=${query}&")
@@ -150,7 +150,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun listingTask() {
-        val marvelList = apiController.dataWrapper.data.results
+        val marvelList = MarvelAPIController.dataWrapper.data.results
         /*if (marvelList.isEmpty()) {
             // load 4 pages of characters when available
             var numOfFirstFetch : Int = if (adapter.mode == R.drawable.view_list) 4 * onScrollListener.listCardPerPage

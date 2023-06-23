@@ -28,8 +28,10 @@ class MarvelAPIController {
     val privateKey = "8c2f56fd47a13acb17ee127e59ebcc54552a04a7"
     var minNumber = 0
     val httpClient = OkHttpClient()
-    val dataWrapper = CharacterDataWrapper()
 
+    companion object {
+        val dataWrapper = CharacterDataWrapper()
+    }
 
 /*
     fun getCharacters(filters : String) {

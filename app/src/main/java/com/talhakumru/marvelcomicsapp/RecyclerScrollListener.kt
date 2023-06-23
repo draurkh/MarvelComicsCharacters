@@ -10,7 +10,7 @@ class RecyclerScrollListener(private val controller : MarvelAPIController, priva
     // list=0, grid=1
     var mode = 0
 
-    var listSize : Int = controller.dataWrapper.data.results.size
+    var listSize : Int = MarvelAPIController.dataWrapper.data.results.size
 
     val listCardHeight = display.density * 150
     val gridCardHeight = display.density * 260
@@ -47,7 +47,7 @@ class RecyclerScrollListener(private val controller : MarvelAPIController, priva
         }
         println("limit: ${viewLimit}")
         println("vPos: ${pos}")
-        if (pos > viewLimit && listSize != controller.dataWrapper.data.results.size) {
+        if (pos > viewLimit && listSize != MarvelAPIController.dataWrapper.data.results.size) {
             //println("${viewLimit} eşiği ${pos} ile aşıldı")
             //println("liste karti yuksekligi: ${listCardHeight}")
             //println("grid karti yuksekligi: ${gridCardHeight}")
@@ -62,8 +62,8 @@ class RecyclerScrollListener(private val controller : MarvelAPIController, priva
             println("View limit: $viewLimit")
             val filter = "?offset=${listSize+100}&limit=${100}&"
             controller.getGson(filter)
-            listSize = controller.dataWrapper.data.results.size
-            println("listede ${controller.dataWrapper.data.results.size}=${listSize} tane eleman var")
+            listSize = MarvelAPIController.dataWrapper.data.results.size
+            println("listede ${MarvelAPIController.dataWrapper.data.results.size}=${listSize} tane eleman var")
         }
     }
 }

@@ -62,10 +62,10 @@ class RecyclerViewAdapter(private val layoutManager : GridLayoutManager) : Recyc
         holder.nameTextView.text = list[position].name
         holder.seriesTextView.text = "${list[position].series.available} Series"
 
-        if (list[position].isFavourite == 1) holder.starView.setImageResource(R.drawable.star_filled)
-        else holder.starView.setImageResource(R.drawable.star_hollow)
-
         // check if the character is favourite
+        // TODO(check if favourite)
+
+
         /*if (characters[position].isFavourite) holder.starView.setImageResource(R.drawable.star_filled)
         else {
             try {
@@ -89,9 +89,10 @@ class RecyclerViewAdapter(private val layoutManager : GridLayoutManager) : Recyc
 
         holder.itemView.setOnClickListener {
             val intent = Intent(holder.itemView.context,DetailsActivity::class.java)
-            val gson = Gson()
+            /*val gson = Gson()
             val json = gson.toJson(list[position])
-            intent.putExtra("characterData", json)
+            intent.putExtra("characterData", json)*/
+            intent.putExtra("position", position)
 
             holder.itemView.context.startActivity(intent)
         }

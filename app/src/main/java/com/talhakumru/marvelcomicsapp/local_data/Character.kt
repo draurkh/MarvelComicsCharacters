@@ -31,8 +31,9 @@ data class Character (
 
     // only Marvel data
     val thumbnail: Image = Image()
-    val comics: ComicList = ComicList()
-    val stories: StoryList = StoryList()
-    val events: EventList = EventList()
-    val series: SeriesList = SeriesList()
+    val comics = ComicList()
+    val stories = StoryList()
+    val events = EventList()
+    val series = SeriesList()
+
 }

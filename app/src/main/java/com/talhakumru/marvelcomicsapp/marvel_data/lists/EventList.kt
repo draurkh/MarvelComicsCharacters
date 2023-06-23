@@ -1,7 +1,7 @@
 package com.talhakumru.marvelcomicsapp.marvel_data.lists
 
-import com.talhakumru.marvelcomicsapp.marvel_data.lists.summary.EventSummary
-
-class EventList {
-    val items = ArrayList<EventSummary>()
+class EventList{
+    val available : Int = 0
+    val collectionURI : String = ""
+    val list = ArrayList<String>()
 }
