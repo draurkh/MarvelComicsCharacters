@@ -4,11 +4,16 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.talhakumru.marvelcomicsapp.local_data.dao.CharacterDao
+import com.talhakumru.marvelcomicsapp.local_data.dao.FavouriteDao
+import com.talhakumru.marvelcomicsapp.local_data.tables.Character
+import com.talhakumru.marvelcomicsapp.local_data.tables.Favourite
 
-@Database(version = 1, entities = [Character::class], exportSchema = false)
+@Database(version = 2, entities = [Character::class, Favourite::class], exportSchema = false)
 abstract class CharacterDatabase : RoomDatabase() {
 
     abstract fun characterDao() : CharacterDao
+    abstract fun favouriteDao() : FavouriteDao
 
     // only one database object can exist
     companion object {
@@ -23,7 +28,10 @@ abstract class CharacterDatabase : RoomDatabase() {
 
             // create the database
             synchronized(this) {
-                val instance = Room.databaseBuilder(context.applicationContext,CharacterDatabase::class.java,"characters").build()
+                val instance = Room.databaseBuilder(context.applicationContext,
+                    CharacterDatabase::class.java,"characters")
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 return instance
             }

@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     tools:context=".DetailsActivity">
 
     <androidx.appcompat.widget.Toolbar
@@ -21,12 +21,15 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layoutMode="opticalBounds">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp">
+            android:layout_marginTop="30dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp">
 
             <ImageView
                 android:id="@+id/detailsImageView"
@@ -45,32 +48,121 @@
                 android:text="Superhero Name"
                 android:textAlignment="center"
                 android:textIsSelectable="true"
-                android:textSize="30sp"
+                android:textSize="40sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/detailsImageView" />
+                app:layout_constraintTop_toBottomOf="@id/detailsImageView" />
 
             <TextView
-                android:id="@+id/detailsTextView"
-                android:layout_width="350dp"
+                android:id="@+id/seriesHeaderView"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="25dp"
+                android:text="SERIES"
+                android:textStyle="bold"
+                android:textColor="#52AEFF"
+                android:textSize="25sp"
+                app:layout_constraintTop_toBottomOf="@id/detailsNameView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <TextView
+                android:id="@+id/seriesTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
                 android:text="List of comics, series, stories and events"
+                android:textAlignment="textStart"
+                android:visibility="visible"
                 android:textSize="18sp"
                 android:textIsSelectable="true"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/detailsNameView" />
+                app:layout_constraintTop_toBottomOf="@id/seriesHeaderView" />
 
-
-            <!--<ListView
+            <TextView
+                android:id="@+id/storiesHeaderView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="25dp"
+                android:text="STORIES"
+                android:textStyle="bold"
+                android:textColor="#52AEFF"
+                android:textSize="25sp"
+                app:layout_constraintTop_toBottomOf="@id/seriesTextView"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/detailsNameView">
-            </ListView>-->
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <TextView
+                android:id="@+id/storiesTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="List of comics, series, stories and events"
+                android:textAlignment="textStart"
+                android:visibility="visible"
+                android:textSize="18sp"
+                android:textIsSelectable="true"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/storiesHeaderView" />
+
+            <TextView
+                android:id="@+id/eventsHeaderView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:text="EVENTS"
+                android:textStyle="bold"
+                android:textColor="#52AEFF"
+                android:textSize="25sp"
+                app:layout_constraintTop_toBottomOf="@id/storiesTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <TextView
+                android:id="@+id/eventsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="List of comics, series, stories and events"
+                android:textAlignment="textStart"
+                android:visibility="visible"
+                android:textSize="18sp"
+                android:textIsSelectable="true"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/eventsHeaderView" />
+
+            <TextView
+                android:id="@+id/comicsHeaderView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:text="COMICS"
+                android:textStyle="bold"
+                android:textColor="#52AEFF"
+                android:textSize="25sp"
+                app:layout_constraintTop_toBottomOf="@id/eventsTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <TextView
+                android:id="@+id/comicsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="List of comics, series, stories and events"
+                android:textAlignment="textStart"
+                android:visibility="visible"
+                android:textSize="18sp"
+                android:textIsSelectable="true"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/comicsHeaderView" />
+
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </ScrollView>

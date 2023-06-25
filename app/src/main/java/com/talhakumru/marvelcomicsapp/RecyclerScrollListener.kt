@@ -2,7 +2,6 @@ package com.talhakumru.marvelcomicsapp
 
 import android.util.DisplayMetrics
 import androidx.recyclerview.widget.RecyclerView
-import com.talhakumru.marvelcomicsapp.local_data.Character
 import kotlin.math.roundToInt
 
 class RecyclerScrollListener(private val controller : MarvelAPIController, private val numOfFirstFetch : Int, private val display : DisplayMetrics) : RecyclerView.OnScrollListener() {

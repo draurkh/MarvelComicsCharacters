@@ -10,11 +10,14 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.google.gson.Gson
-import com.talhakumru.marvelcomicsapp.local_data.Character
+import com.talhakumru.marvelcomicsapp.local_data.tables.Character
+import com.talhakumru.marvelcomicsapp.local_data.CharacterViewModel
+import com.talhakumru.marvelcomicsapp.local_data.tables.Favourite
 
-class RecyclerViewAdapter(private val layoutManager : GridLayoutManager) : RecyclerView.Adapter<RecyclerViewAdapter.CharacterCardVH>() {
+class RecyclerViewAdapter(private val layoutManager : GridLayoutManager, private val viewModel : CharacterViewModel) : RecyclerView.Adapter<RecyclerViewAdapter.CharacterCardVH>() {
 
-    private var list = ArrayList<Character>()
+    private var localList = emptyList<Character>()
+    private var onlineList = emptyList<Character>()
 
     class CharacterCardVH(itemView : View, spanCount : Int) : RecyclerView.ViewHolder(itemView) {
         val nameTextView : TextView
@@ -53,71 +56,72 @@ class RecyclerViewAdapter(private val layoutManager : GridLayoutManager) : Recyc
     }
 
     override fun getItemCount(): Int {
-        return list.size
+        return onlineList.size + localList.size
     }
 
     override fun onBindViewHolder(holder: CharacterCardVH, position: Int) {
         //println("View Position: ${position}")
+        val character : Character
+        val imageURL : String
+        val onlinePos = position - localList.size
 
-        holder.nameTextView.text = list[position].name
-        holder.seriesTextView.text = "${list[position].series.available} Series"
+        if (position < localList.size) {
+            // character is local
+            character = localList[position]
+            holder.seriesTextView.text = "${character.numOfSeries} Series\nSaved on Device"
+            imageURL = character.imageURL
+        } else {
+            // character is online
+            character = onlineList[onlinePos]
+            holder.seriesTextView.text = "${character.series.available} Series"
+            imageURL = "${character.thumbnail.path}.${character.thumbnail.extension}"
+        }
 
-        // check if the character is favourite
-        // TODO(check if favourite)
+        holder.nameTextView.text = character.name
 
+        holder.imageView.load(imageURL) { this.crossfade(true) }
 
-        /*if (characters[position].isFavourite) holder.starView.setImageResource(R.drawable.star_filled)
-        else {
-            try {
-                val fDatabase : SQLiteDatabase = openOrCreateDatabase("/data/data/com.talhakumru.marvelcomics/databases", null)
-                fDatabase.execSQL("CREATE TABLE IF NOT EXISTS favourites (id INTEGER PRIMARY KEY ASC, is_favourite INT);")
-                val cursor : Cursor = fDatabase.rawQuery("SELECT is_favourite FROM favourites WHERE id IS ?", arrayOf(characters[position].id.toString()))
-                cursor.moveToFirst()
-                characters[position].isFavourite = !cursor.isNull(0) && cursor.getInt(0) == 1
-                cursor.close()
-                if (characters[position].isFavourite) holder.starView.setImageResource(R.drawable.star_filled)
-                else holder.starView.setImageResource(R.drawable.star_hollow)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }*/
+        val favData = viewModel.isFavourite(character.id)
 
+        val isFavourite = favData != null && favData.isFavourite == 1
 
-        val image = list[position].thumbnail
-        holder.imageView.load("${image.path}.${image.extension}") { this.crossfade(true) }
-
+        if (isFavourite) holder.starView.setImageResource(R.drawable.star_filled)
+        else holder.starView.setImageResource(R.drawable.star_hollow)
 
         holder.itemView.setOnClickListener {
             val intent = Intent(holder.itemView.context,DetailsActivity::class.java)
-            /*val gson = Gson()
-            val json = gson.toJson(list[position])
-            intent.putExtra("characterData", json)*/
+            val gson = Gson()
+            val favJson : String = if (favData != null) gson.toJson(favData)
+            else gson.toJson(Favourite(character.id, 0, 0))
+
+            intent.putExtra("favData", favJson)
+            intent.putExtra("localSize", localList.size)
             intent.putExtra("position", position)
+            intent.putExtra("id", character.id)
 
             holder.itemView.context.startActivity(intent)
         }
+
+
     }
 
     override fun getItemViewType(position: Int): Int {
         val spanCount = layoutManager.spanCount
-        if (spanCount == 1) {
-            return R.drawable.view_list
-        }
-        else {
-            return R.drawable.view_grid
+        return if (spanCount == 1) {
+            R.drawable.view_list
+        } else {
+            R.drawable.view_grid
         }
 
     }
 
-    fun setList(characters : ArrayList<Character>) {
-        this.list = characters
+    fun setLocalList(characters : List<Character>) {
+        this.localList = characters
         notifyDataSetChanged()
     }
 
-    fun addToList(characters: ArrayList<Character>) {
-        for (character in characters) {
-            this.list.add(character)
-        }
+    fun setOnlineList(characters : List<Character>) {
+        this.onlineList = characters
         notifyDataSetChanged()
     }
 

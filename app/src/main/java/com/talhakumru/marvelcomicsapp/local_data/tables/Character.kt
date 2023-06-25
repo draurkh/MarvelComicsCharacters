@@ -1,4 +1,4 @@
-package com.talhakumru.marvelcomicsapp.local_data
+package com.talhakumru.marvelcomicsapp.local_data.tables
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -9,31 +9,31 @@ import com.talhakumru.marvelcomicsapp.marvel_data.lists.EventList
 import com.talhakumru.marvelcomicsapp.marvel_data.lists.SeriesList
 import com.talhakumru.marvelcomicsapp.marvel_data.lists.StoryList
 
-@Entity(tableName = "character_table", ignoredColumns = ["thumbnail", "comics", "stories", "events", "series"])
+@Entity(tableName = "characters", ignoredColumns = ["thumbnail", "comics", "stories", "events", "series"])
 data class Character (
     @PrimaryKey
     val id : Int,
 
     val name : String,
-    @ColumnInfo(name = "is_favourite")
-    val isFavourite : Int,
+    @ColumnInfo(name = "available_series")
+    var numOfSeries : Int,
     @ColumnInfo(name = "image_url")
-    val imageURL : String,
+    var imageURL : String,
     @ColumnInfo(name = "series_json")
-    val seriesJson : String,
+    var seriesJson : String,
     @ColumnInfo(name = "stories_json")
-    val storiesJson : String,
+    var storiesJson : String,
     @ColumnInfo(name = "events_json")
-    val eventsJson : String,
+    var eventsJson : String,
     @ColumnInfo(name = "comics_json")
-    val comicsJson : String
+    var comicsJson : String
     ) {
 
     // only Marvel data
     val thumbnail: Image = Image()
-    val comics = ComicList()
-    val stories = StoryList()
-    val events = EventList()
-    val series = SeriesList()
+    var comics = ComicList()
+    var stories = StoryList()
+    var events = EventList()
+    var series = SeriesList()
 
 }

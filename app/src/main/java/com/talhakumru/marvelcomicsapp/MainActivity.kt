@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import com.talhakumru.marvelcomicsapp.databinding.ActivityMainBinding
-import com.talhakumru.marvelcomicsapp.local_data.Character
+import com.talhakumru.marvelcomicsapp.local_data.tables.Character
 import com.talhakumru.marvelcomicsapp.local_data.CharacterViewModel
 import kotlinx.coroutines.Runnable
 import kotlin.math.roundToInt
@@ -28,9 +28,12 @@ class MainActivity : AppCompatActivity() {
 
     val displayMetrics = Resources.getSystem().displayMetrics
 
+    // accesses app database
+    val characterViewModel : CharacterViewModel by viewModels()
+
     val gridCols = calculateGridColumnCount()
     var gridLayoutManager = GridLayoutManager(this, 1)
-    var adapter = RecyclerViewAdapter(gridLayoutManager)
+    private lateinit var adapter : RecyclerViewAdapter
 
     // character list, shown by recycler view
     var characters = ArrayList<Character>()
@@ -56,8 +59,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // accesses app database
-    val characterViewModel : CharacterViewModel by viewModels()
     var localCharacters = emptyList<Character>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,17 +74,25 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.appToolbar))
         appBar = supportActionBar
 
+        adapter = RecyclerViewAdapter(gridLayoutManager, characterViewModel)
+
         binding.recyclerView.layoutManager = gridLayoutManager
         binding.recyclerView.adapter = adapter
 
         characterViewModel.readAll.observe(this, Observer { localList ->
             // update the array at every update in database
-            localCharacters = localList
-            if (MarvelAPIController.dataWrapper.data.results.isEmpty()) {
-                // show local characters when online data is not available
-                characters = localList as ArrayList<Character>
+            //localCharacters = localList
+            adapter.setLocalList(localList)
+            for (item in localList) {
+                println(item)
             }
         })
+
+        characterViewModel.readFavourites.observe(this) { favList ->
+            println("fav list changed")
+            println(favList)
+            adapter.notifyDataSetChanged()
+        }
 
         onScrollListener = RecyclerScrollListener(apiController, minNumberOfFirstFetch, displayMetrics)
 
@@ -151,49 +160,18 @@ class MainActivity : AppCompatActivity() {
 
     fun listingTask() {
         val marvelList = MarvelAPIController.dataWrapper.data.results
-        /*if (marvelList.isEmpty()) {
-            // load 4 pages of characters when available
-            var numOfFirstFetch : Int = if (adapter.mode == R.drawable.view_list) 4 * onScrollListener.listCardPerPage
-            else 4 * onScrollListener.gridCardPerPage
-            val numOfRequests : Int = (numOfFirstFetch / 100.0).toInt()
-
-            lifecycleScope.launch() {
-                for (i in 0..numOfRequests) {
-                    val task = launch { getCharacters("?offset=${i * 100}&limit=${100}&") }
-                    task.await()
-                }
-            }
-            adapter.setList(marvelList)
-            listSize = marvelList.size
-        }*/
         if (marvelList.size != listSize) {
             println("dataset changed")
             //adapter.addToList(marvelList)
-            adapter.setList(marvelList)
+            adapter.setOnlineList(marvelList)
             listSize = marvelList.size
             println("size: ${adapter.itemCount}")
             println("Size: ${marvelList.size}")
+        //TODO("update listSize properly")
         }
     }
 
     fun toggleLayout(view: View) {
-        /*when (adapter.mode) {
-            R.drawable.view_list -> {
-                adapter.mode = R.drawable.view_grid
-                binding.recyclerView.layoutManager = gridLayoutManager
-                onScrollListener.mode = 1
-                scrollToYfromListToGrid()
-                //binding.recyclerView.scrollBy(0, onScrollListener.yPos)
-            }
-
-            R.drawable.view_grid -> {
-                adapter.mode = R.drawable.view_list
-                binding.recyclerView.layoutManager = linearLayoutManager
-                onScrollListener.mode = 0
-                scrollToYfromGridToList()
-                //binding.recyclerView.scrollBy(0, onScrollListener.yPos)
-            }
-        }*/
 
         if (gridLayoutManager.spanCount == 1) {
             gridLayoutManager.spanCount = gridCols
