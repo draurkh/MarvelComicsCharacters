@@ -1,5 +1,6 @@
 package com.talhakumru.marvelcomicsapp
 
+import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
@@ -41,6 +42,9 @@ class RecyclerViewAdapter(private val layoutManager : GridLayoutManager, private
                 }
             }
         }
+        fun getContext() : Context {
+            return itemView.context
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CharacterCardVH {
@@ -61,25 +65,29 @@ class RecyclerViewAdapter(private val layoutManager : GridLayoutManager, private
 
     override fun onBindViewHolder(holder: CharacterCardVH, position: Int) {
         //println("View Position: ${position}")
+        //println("View Local Size: ${localList.size}")
         val character : Character
         val imageURL : String
+        val numOfSeries : Int
         val onlinePos = position - localList.size
 
         if (position < localList.size) {
             // character is local
             character = localList[position]
-            holder.seriesTextView.text = "${character.numOfSeries} Series\nSaved on Device"
+            numOfSeries = character.numOfSeries
             imageURL = character.imageURL
+            holder.itemView.setBackgroundColor(holder.getContext().getColor(R.color.localData))
         } else {
             // character is online
             character = onlineList[onlinePos]
-            holder.seriesTextView.text = "${character.series.available} Series"
-            imageURL = "${character.thumbnail.path}.${character.thumbnail.extension}"
+            numOfSeries = character.series.available
+            imageURL = "${character.thumbnail.path}/standard_fantastic.${character.thumbnail.extension}"
+            holder.itemView.setBackgroundColor(holder.getContext().getColor(R.color.onlineData))
         }
 
         holder.nameTextView.text = character.name
-
         holder.imageView.load(imageURL) { this.crossfade(true) }
+        holder.seriesTextView.text = holder.getContext().getString(R.string.series_num, numOfSeries)    // "${numOfSeries} Series"
 
         val favData = viewModel.isFavourite(character.id)
 

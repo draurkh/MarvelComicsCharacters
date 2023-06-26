@@ -2,4 +2,6 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="localData">#FF6E92A1</color>
+    <color name="onlineData">#FFC1C1C1</color>
 </resources>

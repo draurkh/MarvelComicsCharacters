@@ -4,12 +4,12 @@
 
     <item
         app:actionViewClass="android.widget.Button"
-        android:id="@+id/favoriButonu"
+        android:id="@+id/favButton"
         android:title="@string/add_fav"/>
 
     <item
         app:actionViewClass="android.widget.Button"
-        android:id="@+id/yerelButonu"
+        android:id="@+id/localButton"
         android:title="@string/add_local"/>
 
 </menu>

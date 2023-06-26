@@ -4,8 +4,8 @@
 
     <item app:actionViewClass="android.widget.SearchView"
         android:id="@+id/appbarSearch"
-        android:title="Search"
-        android:icon="@drawable/ic_search_black_24dp"
+        android:title="@string/search"
+        android:icon="@drawable/search_24"
         app:showAsAction="ifRoom"/>
 
 

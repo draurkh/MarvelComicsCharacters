@@ -4,6 +4,7 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.DisplayMetrics
 import android.view.Menu
 import android.view.View
 import android.widget.SearchView
@@ -26,18 +27,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding : ActivityMainBinding
     private var appBar : ActionBar? = null
 
-    val displayMetrics = Resources.getSystem().displayMetrics
+    private val displayMetrics : DisplayMetrics = Resources.getSystem().displayMetrics
 
     // accesses app database
-    val characterViewModel : CharacterViewModel by viewModels()
+    private val characterViewModel : CharacterViewModel by viewModels()
 
-    val gridCols = calculateGridColumnCount()
-    var gridLayoutManager = GridLayoutManager(this, 1)
+    private val gridCols = calculateGridColumnCount()
+    private var gridLayoutManager = GridLayoutManager(this, 1)
     private lateinit var adapter : RecyclerViewAdapter
 
-    // character list, shown by recycler view
-    var characters = ArrayList<Character>()
-    // holds the previous size of characters array if it is updated
+    /*
+    * size of online characters array,
+    * holds the previous size of online characters array if it is updated
+    */
     var listSize : Int = 0
 
     // create a MarvelAPIController to fetch data
@@ -59,11 +61,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    var isFiltered : Boolean = false
+
     var localCharacters = emptyList<Character>()
+    var filteredLocalCharacters = emptyList<Character>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        println(listCardPerPage)
-        println(minNumberOfFirstFetch)
+        //println(listCardPerPage)
+        //println(minNumberOfFirstFetch)
         println("MainActivity.OnCreate is called.")
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -81,7 +86,7 @@ class MainActivity : AppCompatActivity() {
 
         characterViewModel.readAll.observe(this, Observer { localList ->
             // update the array at every update in database
-            //localCharacters = localList
+            localCharacters = localList
             adapter.setLocalList(localList)
             for (item in localList) {
                 println(item)
@@ -95,25 +100,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         onScrollListener = RecyclerScrollListener(apiController, minNumberOfFirstFetch, displayMetrics)
+        binding.recyclerView.addOnScrollListener(onScrollListener)
 
         // fetch first items to initiate scrolling
         apiController.minNumber = minNumberOfFirstFetch
-        val filters = "?limit=100&"
-        getCharacters(filters)
-
-        binding.recyclerView.addOnScrollListener(onScrollListener)
+        apiController.getGson("?limit=100&")
 
         mainHandler = Handler(Looper.getMainLooper())
 
         println("onCreate exited")
     }
-
-    fun getCharacters(filter : String) {
-        println("getCharacters entered")
-        apiController.getGson(filter)
-        println("getCharacters exited")
-    }
-
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.app_bar_menu, menu)
 
@@ -128,11 +124,17 @@ class MainActivity : AppCompatActivity() {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 println("text submitted")
                 mainHandler.removeCallbacks(updateTask)
+                isFiltered = true
+                filteredLocalCharacters = localCharacters.filter {
+                    if (query != null) {
+                        it.name.startsWith(prefix = query, ignoreCase = true)
+                    } else return true
+                }
                 MarvelAPIController.dataWrapper.data.results.clear()
-                listSize = 0
+                apiController.getGson("?nameStartsWith=${query}&limit=100&")
+                adapter.setLocalList(filteredLocalCharacters)
+                adapter.notifyDataSetChanged()
                 mainHandler.post(updateTask)
-                //marvelAPIController.getCharacters("?nameStartsWith=${query}&")
-                getCharacters("?nameStartsWith=${query}&")
                 return false
             }
         })
@@ -140,6 +142,13 @@ class MainActivity : AppCompatActivity() {
         searchView.setOnCloseListener(object : OnCloseListener {
             override fun onClose(): Boolean {
                 println("searchview closed")
+                mainHandler.removeCallbacks(updateTask)
+                adapter.setLocalList(localCharacters)
+                MarvelAPIController.dataWrapper.data.results.clear()
+                apiController.getGson("?limit=100&")
+                adapter.setOnlineList(MarvelAPIController.dataWrapper.data.results)
+                adapter.notifyDataSetChanged()
+                mainHandler.post(updateTask)
                 return false
             }
 
@@ -159,28 +168,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun listingTask() {
+        //println("continues...")
         val marvelList = MarvelAPIController.dataWrapper.data.results
         if (marvelList.size != listSize) {
             println("dataset changed")
-            //adapter.addToList(marvelList)
             adapter.setOnlineList(marvelList)
             listSize = marvelList.size
             println("size: ${adapter.itemCount}")
             println("Size: ${marvelList.size}")
-        //TODO("update listSize properly")
         }
     }
 
-    fun toggleLayout(view: View) {
+    fun switchLayout(view: View) {
 
         if (gridLayoutManager.spanCount == 1) {
+            // switch list to grid layout
             gridLayoutManager.spanCount = gridCols
             binding.layoutButton.setImageResource(R.drawable.view_grid)
         }
         else {
+            // switch grid to list layout
             gridLayoutManager.spanCount = 1
             binding.layoutButton.setImageResource(R.drawable.view_list)
         }
+        onScrollListener.switchLayout()
         adapter.notifyItemRangeChanged(0, adapter.itemCount)
 
 

@@ -7,6 +7,7 @@ import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import java.io.FileInputStream
 import java.io.IOException
 import java.math.BigInteger
 import java.net.URL
@@ -22,9 +23,65 @@ class MarvelAPIController {
 
     companion object {
         val dataWrapper = CharacterDataWrapper()
+        var listSize = 0
     }
 
-/*
+    fun getGson(filter : String) : Boolean {
+        println("getGson entered")
+
+        val url : URL = createRequestURL(filter)
+        asyncGet(url, object: Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                e.printStackTrace()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.use { res ->
+                    if (res.code in arrayOf(401, 405, 409)) throw IOException("Error code ${res.code} while fetching data")
+                    val gson = Gson()
+                    val json = res.body.source().inputStream().reader()
+                    println(json)
+                    val newData : CharacterDataWrapper = gson.fromJson(json, CharacterDataWrapper::class.java)
+                    if (newData.data.results.isEmpty()) return
+                    dataWrapper.append(newData)
+                    if (dataWrapper.data.results.size <= minNumber) {
+                        println("Screen is too big")
+                        getGson("${filter}offset=${dataWrapper.data.results.size}&")
+                    }
+                }
+            }
+        })
+        println("getGson exited")
+        return true
+    }
+
+    fun asyncGet(url : URL, callback : Callback) : Call {
+        println("get entered")
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .build()
+        val call : Call = httpClient.newCall(request)
+        call.enqueue(callback)
+        return call
+    }
+
+    fun createRequestURL(filters: String) : URL {
+        // ts is the timestamp in seconds that is needed by Marvel API to evaluate the URL
+        val ts = System.currentTimeMillis() / 1000
+        val hash = createHash(ts)
+        return URL(baseUrl+"/characters${filters}ts=${ts}&apikey=${publicKey}&hash=${hash}")
+    }
+
+    // hash is md5 digest of (ts+privateKey+publicKey)
+    fun createHash(ts : Long) : String {
+        val bigInt = BigInteger(1, MessageDigest.getInstance("MD5").digest((ts.toString()+privateKey+publicKey).toByteArray(Charsets.UTF_8)))
+        val hash = String.format("%032x", bigInt)
+        println("ts:$ts - hash:$hash")
+        return hash
+    }
+
+    /*
     fun getCharacters(filters : String) {
         println("getCharacters entered")
 
@@ -105,47 +162,7 @@ class MarvelAPIController {
     }
 */
 
-    fun getGson(filter : String) {
-        println("getGson entered")
-
-        val url : URL = createRequestURL(filter)
-        asyncGet(url, object: Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                e.printStackTrace()
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                val gson = Gson()
-
-                response.use {
-                    val json = response.body.source().inputStream().reader()
-                    dataWrapper.append(gson.fromJson(json, CharacterDataWrapper::class.java))
-                    if (dataWrapper.data.results.size < minNumber) {
-                        println("Screen is too big")
-                        getGson("?offset=${dataWrapper.data.results.size}&limit=${100}&")
-                    }
-                    /*println("Size: ${dataWrapper.data.results.size}")
-                    for (item in dataWrapper.data.results) {
-                        println("Name: ${item.name}")
-                    }*/
-                }
-            }
-
-        })
-        println("getGson exited")
-    }
-
-    fun asyncGet(url : URL, callback : Callback) : Call {
-        println("get entered")
-        val request = Request.Builder()
-            .url(url)
-            .get()
-            .build()
-        val call : Call = httpClient.newCall(request)
-        call.enqueue(callback)
-        return call
-    }
-/*
+    /*
     fun get(url : URL) : Response? = runBlocking {
         println("get entered")
         val request = Request.Builder()
@@ -181,19 +198,4 @@ class MarvelAPIController {
         }
     }
 */
-    fun createRequestURL(filters: String) : URL {
-        // ts is the timestamp in seconds that is needed by Marvel API to evaluate the URL
-        val ts = System.currentTimeMillis() / 1000
-        val hash = createHash(ts)
-        return URL(baseUrl+"/characters${filters}ts=${ts}&apikey=${publicKey}&hash=${hash}")
-    }
-
-    // hash is md5 digest of (ts+privateKey+publicKey)
-    fun createHash(ts : Long) : String {
-        val bigInt = BigInteger(1, MessageDigest.getInstance("MD5").digest((ts.toString()+privateKey+publicKey).toByteArray(Charsets.UTF_8)))
-        val hash = String.format("%032x", bigInt)
-        println("ts:$ts - hash:$hash")
-        return hash
-    }
-
 }

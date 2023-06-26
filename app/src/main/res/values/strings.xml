@@ -1,7 +1,20 @@
 <resources>
     <string name="app_name">Marvel Comics Characters</string>
-    <string name="add_local">Add to saved characters</string>
-    <string name="rm_local">Remove from saved characters</string>
+
+    <string name="search">Search</string>
+
+    <string name="add_local">Save character</string>
+    <string name="rm_local">Remove from saved</string>
     <string name="add_fav">Add to favourites</string>
     <string name="rm_fav">Remove from favourites</string>
+
+    <string name="series_num">%1$d Series</string>
+
+    <string name="toast_fav_added">%1$s is added to favourites</string>
+    <string name="toast_fav_removed">%1$s is removed from favourites</string>
+    <string name="toast_local_added">%1$s is saved on your device</string>
+    <string name="toast_local_removed">%1$s is removed from saved</string>
+
+    <string name="no_media">This character is not included in any of this type of media.</string>
+
 </resources>

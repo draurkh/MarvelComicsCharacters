@@ -38,7 +38,7 @@
         android:contentDescription="Toggle Layout"
         android:clickable="true"
         android:focusable="true"
-        android:onClick="toggleLayout"
+        android:onClick="switchLayout"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/view_list" />

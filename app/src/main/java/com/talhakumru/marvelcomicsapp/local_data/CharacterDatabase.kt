@@ -9,7 +9,7 @@ import com.talhakumru.marvelcomicsapp.local_data.dao.FavouriteDao
 import com.talhakumru.marvelcomicsapp.local_data.tables.Character
 import com.talhakumru.marvelcomicsapp.local_data.tables.Favourite
 
-@Database(version = 2, entities = [Character::class, Favourite::class], exportSchema = false)
+@Database(version = 1, entities = [Character::class, Favourite::class], exportSchema = false)
 abstract class CharacterDatabase : RoomDatabase() {
 
     abstract fun characterDao() : CharacterDao

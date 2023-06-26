@@ -8,10 +8,14 @@ import android.text.SpannedString
 import android.util.JsonReader
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import coil.load
+import com.google.gson.ExclusionStrategy
+import com.google.gson.FieldAttributes
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.talhakumru.marvelcomicsapp.databinding.ActivityDetailsBinding
 import com.talhakumru.marvelcomicsapp.local_data.CharacterViewModel
 import com.talhakumru.marvelcomicsapp.local_data.tables.Character
@@ -75,7 +79,7 @@ class DetailsActivity : AppCompatActivity() {
         else {
             println("character is not local")
             character = MarvelAPIController.dataWrapper.data.results[position - localSize]
-            character.imageURL = "${character.thumbnail.path}.${character.thumbnail.extension}"
+            character.imageURL = "${character.thumbnail.path}/detail.${character.thumbnail.extension}"
         }
 
         mainHandler = Handler(Looper.getMainLooper())
@@ -101,19 +105,15 @@ class DetailsActivity : AppCompatActivity() {
             }
         }
 
-        //runOnce = arrayOf(true, true, true, true)
-
-
         binding.detailsNameView.text = character.name
         binding.detailsImageView.load(character.imageURL)
-        //println("${character.id}: ${character.isFavourite}")
         println("DetailsActivity onCreate is exited")
     }
 
     fun getMedia(list : AbstractMediaList, mediaType : String) : Int {
-        val limit = if (list.available > 100) 100 else list.available
+        val limit = if (list.available > 50) 50 else list.available
         if (limit != 0)
-            fetchData(list.elements, mediaType, limit)
+            fetchMedia(list.elements, mediaType, limit)
         return limit
     }
     
@@ -128,14 +128,14 @@ class DetailsActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.details_bar_menu, menu)
         menu?.let {
-            val favItem = it.findItem(R.id.favoriButonu)
+            val favItem = it.findItem(R.id.favButton)
             if (favData.isFavourite == 0) {
                 favItem.title = getString(R.string.add_fav)
             } else {
                 favItem.title = getString(R.string.rm_fav)
             }
 
-            val localItem = it.findItem(R.id.yerelButonu)
+            val localItem = it.findItem(R.id.localButton)
             if (favData.isLocal == 0) {
                 localItem.title = getString(R.string.add_local)
             } else {
@@ -147,32 +147,31 @@ class DetailsActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.favoriButonu -> {
+            R.id.favButton -> {
                 println("FAVORI CONTEXT ITEM SECILDI")
                 if (favData.isFavourite == 0) {
-                    // not fav
-                    viewModel.addFavourite(Favourite(character.id, 1, favData.isLocal))
+                    // if not fav then add to fav list
                     favData.isFavourite = 1
+                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
                     item.title = getString(R.string.rm_fav)
-                } else if (favData.isFavourite == 1 && favData.isLocal == 1) {
-                    // fav and local
-                    viewModel.addFavourite(Favourite(character.id, 0, favData.isLocal))
-                    favData.isFavourite = 0
-                    item.title = getString(R.string.add_fav)
+                    Toast.makeText(this,getString(R.string.toast_fav_added, character.name),Toast.LENGTH_SHORT).show()
                 } else {
-                    // fav but not local
-                    viewModel.deleteFavourite(character.id)
+                    // if fav then remove from fav list
                     favData.isFavourite = 0
+                    if (favData.isLocal == 1)
+                        // only change data
+                        viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
+                    else
+                        // delete row
+                        viewModel.deleteFavourite(character.id)
                     item.title = getString(R.string.add_fav)
+                    Toast.makeText(this,getString(R.string.toast_fav_removed, character.name),Toast.LENGTH_SHORT).show()
                 }
             }
-            R.id.yerelButonu -> {
+            R.id.localButton -> {
                 println("YEREL CONTEXT ITEM SECILDI")
                 if (favData.isLocal == 0) {
-                    // not local
-                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, 1))
-                    favData.isLocal = 1
-                    item.title = getString(R.string.rm_fav)
+                    // if not local, then add to local list
                     val gson = Gson()
                     character.seriesJson = gson.toJson(character.series)
                     character.storiesJson = gson.toJson(character.stories)
@@ -181,18 +180,23 @@ class DetailsActivity : AppCompatActivity() {
                     character.imageURL = "${character.thumbnail.path}.${character.thumbnail.extension}"
                     character.numOfSeries = character.series.available
                     viewModel.addCharacter(character)
-                } else if (favData.isLocal == 1 && favData.isFavourite == 1) {
-                    // local and fav
-                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, 0))
-                    favData.isLocal = 0
-                    item.title = getString(R.string.add_fav)
-                    viewModel.removeCharacter(character)
+
+                    favData.isLocal = 1
+                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
+                    item.title = getString(R.string.rm_local)
+                    Toast.makeText(this,getString(R.string.toast_local_added, character.name), Toast.LENGTH_SHORT).show()
                 } else {
-                    // local but not fav
-                    viewModel.deleteFavourite(character.id)
-                    favData.isLocal = 0
-                    item.title = getString(R.string.add_fav)
+                    // if local, then remove from local list
                     viewModel.removeCharacter(character)
+                    item.title = getString(R.string.add_local)
+                    favData.isLocal = 0
+                    if (favData.isFavourite == 1)
+                        // only change data
+                        viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
+                    else
+                        // delete row
+                        viewModel.deleteFavourite(character.id)
+                    Toast.makeText(this,getString(R.string.toast_local_removed, character.name), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -229,22 +233,19 @@ class DetailsActivity : AppCompatActivity() {
     }
 
     fun printResultsOnScreen(list : List<String>) : SpannedString {
-        //var text = "<h2><b>${heading}</b></h2>"
         var text : String = ""
-        if (list.isEmpty()) text = text.plus("<p>This character is not included in any series.</p>")
-        //println(text)
-        //println("there are ${character.series.list.size} items in series")
+        if (list.isEmpty()) text += getString(R.string.no_media)
         for (title in list) {
-            text = text.plus("<ul>${title}<ul>")
+            text += "<ul>${title}<ul>"
         }
-        val printText = Html.fromHtml(text, Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH)
+        val printText = Html.fromHtml(text, Html.FROM_HTML_SEPARATOR_LINE_BREAK_HEADING)
         return SpannedString(printText)
     }
 
-    fun fetchData(list : ArrayList<String>, mediaType : String, limit : Int) {
-        val URL = apiController.createRequestURL("/${character.id}/${mediaType}?limit=${limit}&")
+    private fun fetchMedia(list : ArrayList<String>, mediaType : String, limit : Int) {
+        val url = apiController.createRequestURL("/${character.id}/${mediaType}?limit=${limit}&")
 
-        apiController.asyncGet(URL, object : Callback {
+        apiController.asyncGet(url, object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 e.printStackTrace()
             }
@@ -286,8 +287,6 @@ class DetailsActivity : AppCompatActivity() {
                     reader.endObject()
                 }
             }
-
         })
     }
-
 }

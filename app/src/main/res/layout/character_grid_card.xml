@@ -5,14 +5,13 @@
     android:layout_width="125dp"
     android:layout_height="wrap_content"
     android:layout_margin="3dp"
-    android:background="#9C9C9C"
+    android:background="#C1C1C1"
     android:id="@+id/lmao">
 
     <ImageView
         android:id="@+id/imageGridView"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
-        android:scaleType="centerCrop"/>
+        android:layout_height="140dp"/>
 
     <TextView
         android:id="@+id/nameGridTextView"
@@ -22,6 +21,8 @@
         android:text="Name"
         android:textAlignment="center"
         android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
         android:layout_gravity="center"
         android:gravity="center"/>
 
@@ -36,6 +37,8 @@
             android:layout_margin="5dp"
             android:text="Number of series"
             android:textSize="16sp"
+            android:textStyle="italic"
+            android:textColor="#3C3C3C"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"/>
 
