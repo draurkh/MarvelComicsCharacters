@@ -40,12 +40,10 @@ class RecyclerScrollListener(private val controller : MarvelAPIController, priva
         if (mode == 0) {
             listPos += dy
             pos = listPos
-            //viewLimit = listViewLimit
         }
         else{
             gridPos += dy
             pos = gridPos
-            //viewLimit = gridViewLimit
         }
         //println("limit: ${viewLimit}")
         println("vPos: ${pos}")

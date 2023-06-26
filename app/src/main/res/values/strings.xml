@@ -17,4 +17,7 @@
 
     <string name="no_media">This character is not included in any of this type of media.</string>
 
+    <string name="view_gone">%1$s ▶</string>
+    <string name="view_visible">%1$s ▼</string>
+
 </resources>

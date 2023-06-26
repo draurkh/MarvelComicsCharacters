@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
                 MarvelAPIController.dataWrapper.data.results.clear()
                 apiController.getGson("?nameStartsWith=${query}&limit=100&")
                 adapter.setLocalList(filteredLocalCharacters)
-                adapter.notifyDataSetChanged()
+                adapter.notifyItemRangeChanged(0, adapter.itemCount)
                 mainHandler.post(updateTask)
                 return false
             }

@@ -8,14 +8,13 @@ import android.text.SpannedString
 import android.util.JsonReader
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import coil.load
-import com.google.gson.ExclusionStrategy
-import com.google.gson.FieldAttributes
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.talhakumru.marvelcomicsapp.databinding.ActivityDetailsBinding
 import com.talhakumru.marvelcomicsapp.local_data.CharacterViewModel
 import com.talhakumru.marvelcomicsapp.local_data.tables.Character
@@ -48,7 +47,7 @@ class DetailsActivity : AppCompatActivity() {
     var eventsLimit : Int = 0
     var comicsLimit : Int = 0
 
-    var limits = Array<Boolean>(4) { true }
+    var isMediaInit = Array<Boolean>(4) { true }
     lateinit var favData : Favourite
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +59,8 @@ class DetailsActivity : AppCompatActivity() {
         // set toolbar as appbar of the activity
         setSupportActionBar(findViewById(R.id.detailsToolbar))
         val appBar = supportActionBar
+
+        initHeaders()
 
         val intent = intent
         val gson = Gson()
@@ -82,10 +83,7 @@ class DetailsActivity : AppCompatActivity() {
             character.imageURL = "${character.thumbnail.path}/detail.${character.thumbnail.extension}"
         }
 
-        mainHandler = Handler(Looper.getMainLooper())
-        println("Character ID: ${id}")
-
-
+        println("Character ID: $id")
 
         if (character.series.elements.isEmpty() &&
             character.stories.elements.isEmpty() &&
@@ -105,9 +103,69 @@ class DetailsActivity : AppCompatActivity() {
             }
         }
 
+        mainHandler = Handler(Looper.getMainLooper())
+
+        val visibilityListener = View.OnClickListener {  headerView ->
+            var baseText : String = ""
+            val selectedView : View? = when (headerView.id) {
+                binding.seriesHeaderView.id -> {
+                    baseText = "SERIES"
+                    binding.seriesTextView
+                }
+                binding.storiesHeaderView.id -> {
+                    baseText = "STORIES"
+                    binding.storiesTextView
+                }
+                binding.eventsHeaderView.id -> {
+                    baseText = "EVENTS"
+                    binding.eventsTextView
+                }
+                binding.comicsHeaderView.id -> {
+                    baseText = "COMICS"
+                    binding.comicsTextView
+                }
+                else -> { null }
+            }
+            val header = findViewById<TextView>(headerView.id)
+            setHeaderText()
+            if (selectedView != null) {
+                when (selectedView.visibility) {
+                    View.VISIBLE -> {
+                        println("view is visible")
+                        header.text = getString(R.string.view_gone, baseText)
+                        selectedView.visibility = View.GONE
+                    }
+                    View.GONE -> {
+                        println("series is gone")
+                        header.text = getString(R.string.view_visible, baseText)
+                        selectedView.visibility = View.VISIBLE
+                    }
+                    else -> {
+                        println("series is invisible")
+                    }
+                }
+            }
+        }
+
+        binding.seriesHeaderView.setOnClickListener(visibilityListener)
+        binding.storiesHeaderView.setOnClickListener(visibilityListener)
+        binding.eventsHeaderView.setOnClickListener(visibilityListener)
+        binding.comicsHeaderView.setOnClickListener(visibilityListener)
+
         binding.detailsNameView.text = character.name
         binding.detailsImageView.load(character.imageURL)
         println("DetailsActivity onCreate is exited")
+    }
+
+    private fun setHeaderText() {
+
+    }
+
+    private fun initHeaders() {
+        binding.seriesHeaderView.text = getString(R.string.view_gone, "SERIES")
+        binding.storiesHeaderView.text = getString(R.string.view_gone, "STORIES")
+        binding.eventsHeaderView.text = getString(R.string.view_gone, "EVENTS")
+        binding.comicsHeaderView.text = getString(R.string.view_gone, "COMICS")
     }
 
     fun getMedia(list : AbstractMediaList, mediaType : String) : Int {
@@ -116,7 +174,7 @@ class DetailsActivity : AppCompatActivity() {
             fetchMedia(list.elements, mediaType, limit)
         return limit
     }
-    
+
     fun getLocalMedia() {
         val gson = Gson()
         character.series = gson.fromJson(character.seriesJson, SeriesList::class.java)
@@ -214,21 +272,21 @@ class DetailsActivity : AppCompatActivity() {
     }
 
     fun listingTask() {
-        if (limits[0] && character.series.elements.size >= seriesLimit) {
+        if (isMediaInit[0] && character.series.elements.size >= seriesLimit) {
             binding.seriesTextView.text = printResultsOnScreen(character.series.elements)
-            limits[0] = false
+            isMediaInit[0] = false
         }
-        if (limits[1] && character.stories.elements.size >= storiesLimit) {
+        if (isMediaInit[1] && character.stories.elements.size >= storiesLimit) {
             binding.storiesTextView.text = printResultsOnScreen(character.stories.elements)
-            limits[1] = false
+            isMediaInit[1] = false
         }
-        if (limits[2] && character.events.elements.size >= eventsLimit) {
+        if (isMediaInit[2] && character.events.elements.size >= eventsLimit) {
             binding.eventsTextView.text = printResultsOnScreen(character.events.elements)
-            limits[2] = false
+            isMediaInit[2] = false
         }
-        if (limits[3] && character.comics.elements.size >= comicsLimit) {
+        if (isMediaInit[3] && character.comics.elements.size >= comicsLimit) {
             binding.comicsTextView.text = printResultsOnScreen(character.comics.elements)
-            limits[3] = false
+            isMediaInit[3] = false
         }
     }
 
