@@ -32,58 +32,61 @@ import okio.IOException
 class DetailsActivity : AppCompatActivity() {
     private lateinit var binding : ActivityDetailsBinding
     private lateinit var character : Character
-    private var position : Int = 0
-    private val apiController = MarvelAPIController()
+    private var apiController = MarvelAPIController()
+    // viewModel for accessing database
     private val viewModel : CharacterViewModel by viewModels()
     lateinit var mainHandler : Handler
+    // runs every second
     private val updateTask = object : Runnable {
         override fun run() {
-            listingTask()
+            printingTask()
             mainHandler.postDelayed(this, 1000)
         }
     }
+    // how many items can be fetched, maximum of 50
     var seriesLimit : Int = 0
     var storiesLimit : Int = 0
     var eventsLimit : Int = 0
     var comicsLimit : Int = 0
 
-    var isMediaInit = Array<Boolean>(4) { true }
-    lateinit var favData : Favourite
+    // printingTask must fetch each type of media only one time
+    // after executed once, one of this array's items become false
+    var isMediaInit = Array(4) { true }
+    lateinit var favData : Favourite    // from intent
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        println("DetailsActivity onCreate is entered")
+        // println("entered DetailsActivity onCreate")
         super.onCreate(savedInstanceState)
         binding = ActivityDetailsBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
         // set toolbar as appbar of the activity
         setSupportActionBar(findViewById(R.id.detailsToolbar))
-        val appBar = supportActionBar
 
         initHeaders()
 
         val intent = intent
         val gson = Gson()
         favData = gson.fromJson(intent.getStringExtra("favData"), Favourite::class.java)
-        val localSize = intent.getIntExtra("localSize",-1)
-        position = intent.getIntExtra("position", -1)
+        val position = intent.getIntExtra("position", -1)
         val id = intent.getIntExtra("id", -1)
 
-        if (localSize == -1) throw java.io.IOException("Invalid localSize passed to Details activity")
-        if (position == -1) throw java.io.IOException("Invalid position passed to Details activity")
-        if (id == -1) throw java.io.IOException("Invalid id passed to Details activity")
+        if (id == -1) throw IOException("Invalid id type passed to Details activity")
+
+        var detailedImageUrl = ""
 
         if (favData.isLocal == 1) {
-            println("character is local")
+            // println("character is local")
             character = viewModel.getCharacter(id)!!
         }
         else {
-            println("character is not local")
-            character = MarvelAPIController.dataWrapper.data.results[position - localSize]
-            character.imageURL = "${character.thumbnail.path}/detail.${character.thumbnail.extension}"
+            // println("character is not local")
+            if (position == -1) throw IOException("Invalid position type passed to Details activity")
+            character = MarvelAPIController.dataWrapper.data.results[position]
+            detailedImageUrl = "${character.thumbnail.path}/detail.${character.thumbnail.extension}"
         }
 
-        println("Character ID: $id")
+        // println("Character ID: $id")
 
         if (character.series.elements.isEmpty() &&
             character.stories.elements.isEmpty() &&
@@ -105,8 +108,19 @@ class DetailsActivity : AppCompatActivity() {
 
         mainHandler = Handler(Looper.getMainLooper())
 
+        binding.detailsNameView.text = character.name
+
+        if (favData.isLocal == 1) binding.detailsImageView.load(character.imageURL)
+        else binding.detailsImageView.load(detailedImageUrl)
+        // println("exited DetailsActivity onCreate")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mainHandler.post(updateTask)
+        // clicking headers make lists visible or not visible
         val visibilityListener = View.OnClickListener {  headerView ->
-            var baseText : String = ""
+            var baseText = ""
             val selectedView : View? = when (headerView.id) {
                 binding.seriesHeaderView.id -> {
                     baseText = "SERIES"
@@ -127,21 +141,20 @@ class DetailsActivity : AppCompatActivity() {
                 else -> { null }
             }
             val header = findViewById<TextView>(headerView.id)
-            setHeaderText()
             if (selectedView != null) {
                 when (selectedView.visibility) {
                     View.VISIBLE -> {
-                        println("view is visible")
+                        // println("view is visible")
                         header.text = getString(R.string.view_gone, baseText)
                         selectedView.visibility = View.GONE
                     }
                     View.GONE -> {
-                        println("series is gone")
+                        // println("view is gone")
                         header.text = getString(R.string.view_visible, baseText)
                         selectedView.visibility = View.VISIBLE
                     }
                     else -> {
-                        println("series is invisible")
+                        // println("view is invisible")
                     }
                 }
             }
@@ -151,14 +164,89 @@ class DetailsActivity : AppCompatActivity() {
         binding.storiesHeaderView.setOnClickListener(visibilityListener)
         binding.eventsHeaderView.setOnClickListener(visibilityListener)
         binding.comicsHeaderView.setOnClickListener(visibilityListener)
-
-        binding.detailsNameView.text = character.name
-        binding.detailsImageView.load(character.imageURL)
-        println("DetailsActivity onCreate is exited")
     }
 
-    private fun setHeaderText() {
+    override fun onPause() {
+        super.onPause()
+        mainHandler.removeCallbacks(updateTask)
+    }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.details_bar_menu, menu)
+        menu?.let { barMenu ->
+            val favItem = barMenu.findItem(R.id.favButton)
+            if (favData.isFavourite == 0) {
+                favItem.title = getString(R.string.add_fav)
+            } else {
+                favItem.title = getString(R.string.rm_fav)
+            }
+
+            val localItem = barMenu.findItem(R.id.localButton)
+            if (favData.isLocal == 0) {
+                localItem.title = getString(R.string.add_local)
+            } else {
+                localItem.title = getString(R.string.rm_local)
+            }
+        }
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.favButton -> {
+                // println("Favourite context item is chosen")
+                if (favData.isFavourite == 0) {
+                    // if not fav then add to fav list
+                    favData.isFavourite = 1
+                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
+                    item.title = getString(R.string.rm_fav)
+                    Toast.makeText(this,getString(R.string.toast_fav_added, character.name),Toast.LENGTH_SHORT).show()
+                    return false
+                }
+                // if fav then remove from fav list
+                favData.isFavourite = 0
+                if (favData.isLocal == 1)
+                    // only change data
+                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
+                else
+                    // delete row
+                    viewModel.deleteFavourite(character.id)
+                item.title = getString(R.string.add_fav)
+                Toast.makeText(this,getString(R.string.toast_fav_removed, character.name),Toast.LENGTH_SHORT).show()
+            }
+            R.id.localButton -> {
+                // println("Local context item is chosen")
+                if (favData.isLocal == 0) {
+                    // if not local, then add to local list
+                    val gson = Gson()
+                    character.seriesJson = gson.toJson(character.series)
+                    character.storiesJson = gson.toJson(character.stories)
+                    character.eventsJson = gson.toJson(character.events)
+                    character.comicsJson = gson.toJson(character.comics)
+                    character.imageURL = "${character.thumbnail.path}/standard_fantastic.${character.thumbnail.extension}"
+                    character.numOfSeries = character.series.available
+                    viewModel.addCharacter(character)
+
+                    favData.isLocal = 1
+                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
+                    item.title = getString(R.string.rm_local)
+                    Toast.makeText(this,getString(R.string.toast_local_added, character.name), Toast.LENGTH_SHORT).show()
+                    return false
+                }
+                // if local, then remove from local list
+                viewModel.removeCharacter(character)
+                item.title = getString(R.string.add_local)
+                favData.isLocal = 0
+                if (favData.isFavourite == 1)
+                    // only change data
+                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
+                else
+                    // delete row
+                    viewModel.deleteFavourite(character.id)
+                Toast.makeText(this,getString(R.string.toast_local_removed, character.name), Toast.LENGTH_SHORT).show()
+            }
+        }
+        return false
     }
 
     private fun initHeaders() {
@@ -168,110 +256,7 @@ class DetailsActivity : AppCompatActivity() {
         binding.comicsHeaderView.text = getString(R.string.view_gone, "COMICS")
     }
 
-    fun getMedia(list : AbstractMediaList, mediaType : String) : Int {
-        val limit = if (list.available > 50) 50 else list.available
-        if (limit != 0)
-            fetchMedia(list.elements, mediaType, limit)
-        return limit
-    }
-
-    fun getLocalMedia() {
-        val gson = Gson()
-        character.series = gson.fromJson(character.seriesJson, SeriesList::class.java)
-        character.stories = gson.fromJson(character.storiesJson, StoryList::class.java)
-        character.events = gson.fromJson(character.eventsJson, EventList::class.java)
-        character.comics = gson.fromJson(character.comicsJson, ComicList::class.java)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.details_bar_menu, menu)
-        menu?.let {
-            val favItem = it.findItem(R.id.favButton)
-            if (favData.isFavourite == 0) {
-                favItem.title = getString(R.string.add_fav)
-            } else {
-                favItem.title = getString(R.string.rm_fav)
-            }
-
-            val localItem = it.findItem(R.id.localButton)
-            if (favData.isLocal == 0) {
-                localItem.title = getString(R.string.add_local)
-            } else {
-                localItem.title = getString(R.string.rm_local)
-            }
-        }
-        return super.onCreateOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.favButton -> {
-                println("FAVORI CONTEXT ITEM SECILDI")
-                if (favData.isFavourite == 0) {
-                    // if not fav then add to fav list
-                    favData.isFavourite = 1
-                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
-                    item.title = getString(R.string.rm_fav)
-                    Toast.makeText(this,getString(R.string.toast_fav_added, character.name),Toast.LENGTH_SHORT).show()
-                } else {
-                    // if fav then remove from fav list
-                    favData.isFavourite = 0
-                    if (favData.isLocal == 1)
-                        // only change data
-                        viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
-                    else
-                        // delete row
-                        viewModel.deleteFavourite(character.id)
-                    item.title = getString(R.string.add_fav)
-                    Toast.makeText(this,getString(R.string.toast_fav_removed, character.name),Toast.LENGTH_SHORT).show()
-                }
-            }
-            R.id.localButton -> {
-                println("YEREL CONTEXT ITEM SECILDI")
-                if (favData.isLocal == 0) {
-                    // if not local, then add to local list
-                    val gson = Gson()
-                    character.seriesJson = gson.toJson(character.series)
-                    character.storiesJson = gson.toJson(character.stories)
-                    character.eventsJson = gson.toJson(character.events)
-                    character.comicsJson = gson.toJson(character.comics)
-                    character.imageURL = "${character.thumbnail.path}.${character.thumbnail.extension}"
-                    character.numOfSeries = character.series.available
-                    viewModel.addCharacter(character)
-
-                    favData.isLocal = 1
-                    viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
-                    item.title = getString(R.string.rm_local)
-                    Toast.makeText(this,getString(R.string.toast_local_added, character.name), Toast.LENGTH_SHORT).show()
-                } else {
-                    // if local, then remove from local list
-                    viewModel.removeCharacter(character)
-                    item.title = getString(R.string.add_local)
-                    favData.isLocal = 0
-                    if (favData.isFavourite == 1)
-                        // only change data
-                        viewModel.addFavourite(Favourite(character.id, favData.isFavourite, favData.isLocal))
-                    else
-                        // delete row
-                        viewModel.deleteFavourite(character.id)
-                    Toast.makeText(this,getString(R.string.toast_local_removed, character.name), Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-        return false
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mainHandler.post(updateTask)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mainHandler.removeCallbacks(updateTask)
-    }
-
-    fun listingTask() {
+    private fun printingTask() {
         if (isMediaInit[0] && character.series.elements.size >= seriesLimit) {
             binding.seriesTextView.text = printResultsOnScreen(character.series.elements)
             isMediaInit[0] = false
@@ -290,14 +275,29 @@ class DetailsActivity : AppCompatActivity() {
         }
     }
 
-    fun printResultsOnScreen(list : List<String>) : SpannedString {
-        var text : String = ""
+    private fun printResultsOnScreen(list : List<String>) : SpannedString {
+        var text = ""
         if (list.isEmpty()) text += getString(R.string.no_media)
         for (title in list) {
-            text += "<ul>${title}<ul>"
+            text += "<ul>${title}"
         }
         val printText = Html.fromHtml(text, Html.FROM_HTML_SEPARATOR_LINE_BREAK_HEADING)
         return SpannedString(printText)
+    }
+
+    private fun getLocalMedia() {
+        val gson = Gson()
+        character.series = gson.fromJson(character.seriesJson, SeriesList::class.java)
+        character.stories = gson.fromJson(character.storiesJson, StoryList::class.java)
+        character.events = gson.fromJson(character.eventsJson, EventList::class.java)
+        character.comics = gson.fromJson(character.comicsJson, ComicList::class.java)
+    }
+
+    private fun getMedia(list : AbstractMediaList, mediaType : String) : Int {
+        val limit = if (list.available > 50) 50 else list.available
+        if (limit != 0)
+            fetchMedia(list.elements, mediaType, limit)
+        return limit
     }
 
     private fun fetchMedia(list : ArrayList<String>, mediaType : String, limit : Int) {
@@ -305,7 +305,7 @@ class DetailsActivity : AppCompatActivity() {
 
         apiController.asyncGet(url, object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                e.printStackTrace()
+                println("Connection cannot be established. Please reconnect and restart the app")
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -327,9 +327,7 @@ class DetailsActivity : AppCompatActivity() {
                                         while (reader.hasNext()) {
                                             val nameInResults = reader.nextName()
                                             if (nameInResults.equals("title")) {
-                                                val title = reader.nextString()
-                                                //println(title)
-                                                list.add(title)
+                                                list.add(reader.nextString())
                                             } else reader.skipValue()
                                         }
                                         reader.endObject()

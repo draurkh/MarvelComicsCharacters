@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.talhakumru.marvelcomicsapp.local_data.tables.Character
 import com.talhakumru.marvelcomicsapp.local_data.tables.Favourite
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -25,7 +24,8 @@ class CharacterViewModel(application: Application) : AndroidViewModel(applicatio
         readFavourites = repository.readFavourites
     }
 
-    // characters
+    // characters methods
+
     fun addCharacter(character : Character) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.addCharacter(character)
@@ -44,27 +44,13 @@ class CharacterViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    // favourites
+    // favourites methods
 
     fun addFavourite(favourite: Favourite) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.addFavourite(favourite)
         }
     }
-
-
-    /*fun makeFavourite(id : Int, isLocal : Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.makeFavourite(id, isLocal)
-        }
-    }
-
-    fun removeFavourite(id : Int, isLocal : Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.removeFavourite(id, isLocal)
-        }
-    }*/
-
     fun deleteFavourite(id : Int) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.deleteFavourite(id)

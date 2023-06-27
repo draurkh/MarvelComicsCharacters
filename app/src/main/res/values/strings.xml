@@ -1,7 +1,5 @@
 <resources>
-    <string name="app_name">Marvel Comics Characters</string>
-
-    <string name="search">Search</string>
+    <string name="app_name">Marvel Characters</string>
 
     <string name="add_local">Save character</string>
     <string name="rm_local">Remove from saved</string>
@@ -19,5 +17,9 @@
 
     <string name="view_gone">%1$s ▶</string>
     <string name="view_visible">%1$s ▼</string>
+
+    <string name="search">Search</string>
+    <string name="fav_star">Favourite Star</string>
+    <string name="thumbnail">Character Thumbnail</string>
 
 </resources>

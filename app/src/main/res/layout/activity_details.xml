@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     tools:context=".DetailsActivity">
 
     <androidx.appcompat.widget.Toolbar
@@ -20,14 +20,15 @@
         app:layout_constraintTop_toTopOf="parent" />-->
 
     <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layoutMode="opticalBounds">
+        android:layout_height="wrap_content">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
+            android:paddingTop="30dp"
+            android:paddingBottom="20dp"
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp">
 
@@ -159,9 +160,10 @@
                 android:visibility="gone"
                 android:textSize="18sp"
                 android:textIsSelectable="true"
+                app:layout_constraintTop_toBottomOf="@id/comicsHeaderView"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/comicsHeaderView" />
+                app:layout_constraintEnd_toEndOf="parent" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

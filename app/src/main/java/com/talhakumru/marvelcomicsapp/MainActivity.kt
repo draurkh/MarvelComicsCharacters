@@ -11,9 +11,7 @@ import android.widget.SearchView
 import android.widget.SearchView.OnCloseListener
 import android.widget.SearchView.OnQueryTextListener
 import androidx.activity.viewModels
-import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import com.talhakumru.marvelcomicsapp.databinding.ActivityMainBinding
 import com.talhakumru.marvelcomicsapp.local_data.tables.Character
@@ -21,39 +19,37 @@ import com.talhakumru.marvelcomicsapp.local_data.CharacterViewModel
 import kotlinx.coroutines.Runnable
 import kotlin.math.roundToInt
 
-
+// Main activity contains a list of characters from Marvel
 class MainActivity : AppCompatActivity() {
     // use View Binding
     private lateinit var binding : ActivityMainBinding
-    private var appBar : ActionBar? = null
 
     private val displayMetrics : DisplayMetrics = Resources.getSystem().displayMetrics
 
-    // accesses app database
-    private val characterViewModel : CharacterViewModel by viewModels()
+    // access app database
+    private val viewModel : CharacterViewModel by viewModels()
 
+    // Recycler view is used for listing data
     private val gridCols = calculateGridColumnCount()
-    private var gridLayoutManager = GridLayoutManager(this, 1)
+    private var layoutManager = GridLayoutManager(this, 1)
     private lateinit var adapter : RecyclerViewAdapter
 
-    /*
-    * size of online characters array,
-    * holds the previous size of online characters array if it is updated
-    */
+    // size of online characters array,
+    // holds the previous size of online characters array if it is updated
     var listSize : Int = 0
 
     // create a MarvelAPIController to fetch data
     val apiController = MarvelAPIController()
 
     // first fetched data must fit to 4 screens to enable scrolling
-    val listCardPerPage = (displayMetrics.heightPixels / (displayMetrics.density * 150)).roundToInt()
+    val listCardPerPage = (displayMetrics.heightPixels / displayMetrics.density / 150).roundToInt()
     val minNumberOfFirstFetch = 4 * listCardPerPage
 
     // listens to scroll events
     lateinit var onScrollListener : RecyclerScrollListener
 
-    // runs every second
     lateinit var mainHandler : Handler
+    // runs every half a second
     private val updateTask = object : Runnable {
         override fun run() {
             listingTask()
@@ -61,15 +57,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    var isFiltered : Boolean = false
-
+    // lists of locally stored characters
     var localCharacters = emptyList<Character>()
-    var filteredLocalCharacters = emptyList<Character>()
+
+    var isNameFiltered = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        //println(listCardPerPage)
-        //println(minNumberOfFirstFetch)
-        println("MainActivity.OnCreate is called.")
+        // println("entered MainActivity.OnCreate.")
+        // println(listCardPerPage)
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
@@ -77,89 +72,83 @@ class MainActivity : AppCompatActivity() {
 
         // set toolbar as appbar of the activity
         setSupportActionBar(findViewById(R.id.appToolbar))
-        appBar = supportActionBar
 
-        adapter = RecyclerViewAdapter(gridLayoutManager, characterViewModel)
-
-        binding.recyclerView.layoutManager = gridLayoutManager
+        adapter = RecyclerViewAdapter(layoutManager, viewModel)
+        binding.recyclerView.layoutManager = layoutManager
         binding.recyclerView.adapter = adapter
 
-        characterViewModel.readAll.observe(this, Observer { localList ->
-            // update the array at every update in database
-            localCharacters = localList
-            adapter.setLocalList(localList)
-            for (item in localList) {
-                println(item)
-            }
-        })
-
-        characterViewModel.readFavourites.observe(this) { favList ->
-            println("fav list changed")
-            println(favList)
-            adapter.notifyDataSetChanged()
-        }
-
-        onScrollListener = RecyclerScrollListener(apiController, minNumberOfFirstFetch, displayMetrics)
+        onScrollListener = RecyclerScrollListener(apiController, displayMetrics)
         binding.recyclerView.addOnScrollListener(onScrollListener)
 
         // fetch first items to initiate scrolling
-        apiController.minNumber = minNumberOfFirstFetch
-        apiController.getGson("?limit=100&")
+        apiController.getData("?limit=100&", minNumberOfFirstFetch)
 
         mainHandler = Handler(Looper.getMainLooper())
 
-        println("onCreate exited")
+        // println("exited MainActivity.onCreate")
     }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.app_bar_menu, menu)
 
         val searchItem = menu?.findItem(R.id.appbarSearch)
         val searchView = searchItem?.actionView as SearchView
 
+        // handle filter by name feature
         searchView.setOnQueryTextListener(object : OnQueryTextListener {
             override fun onQueryTextChange(newText: String?): Boolean {
-                println("$newText entered")
                 return true
             }
+
+            // list characters whose names start with the entered query
             override fun onQueryTextSubmit(query: String?): Boolean {
-                println("text submitted")
+                // println("text submitted")
                 mainHandler.removeCallbacks(updateTask)
-                isFiltered = true
-                filteredLocalCharacters = localCharacters.filter {
-                    if (query != null) {
-                        it.name.startsWith(prefix = query, ignoreCase = true)
-                    } else return true
-                }
+                isNameFiltered = true
+                onScrollListener.onFilteredByName("nameStartsWith=${query}&")
                 MarvelAPIController.dataWrapper.data.results.clear()
-                apiController.getGson("?nameStartsWith=${query}&limit=100&")
-                adapter.setLocalList(filteredLocalCharacters)
-                adapter.notifyItemRangeChanged(0, adapter.itemCount)
+                apiController.getData("?nameStartsWith=${query}&limit=100&", minNumberOfFirstFetch)
                 mainHandler.post(updateTask)
-                return false
+                return true
             }
         })
 
         searchView.setOnCloseListener(object : OnCloseListener {
             override fun onClose(): Boolean {
-                println("searchview closed")
+                // println("searchview closed")
+                if (!isNameFiltered)
+                    // SearchView opened but closed without searching
+                    return false
+
+                // disable filtering
                 mainHandler.removeCallbacks(updateTask)
-                adapter.setLocalList(localCharacters)
+                isNameFiltered = false
+                onScrollListener.onFilteredByName("")
                 MarvelAPIController.dataWrapper.data.results.clear()
-                apiController.getGson("?limit=100&")
-                adapter.setOnlineList(MarvelAPIController.dataWrapper.data.results)
-                adapter.notifyDataSetChanged()
+                apiController.getData("?limit=100&", minNumberOfFirstFetch)
                 mainHandler.post(updateTask)
                 return false
             }
-
         })
-
-        return super.onCreateOptionsMenu(menu)
+        return true
     }
 
     override fun onResume() {
         super.onResume()
         mainHandler.post(updateTask)
+        // update list when database is changed
+        viewModel.readAll.observe(this) { localList ->
+            // update the array at every update in database
+
+            localCharacters = localList
+            adapter.setLocalList(localList)
+        }
+
+        // update list when database is changed
+        viewModel.readFavourites.observe(this) { favList ->
+            println("Favourites List: $favList")
+            adapter.notifyItemRangeChanged(0, adapter.itemCount)
+        }
     }
 
     override fun onPause() {
@@ -170,57 +159,33 @@ class MainActivity : AppCompatActivity() {
     fun listingTask() {
         //println("continues...")
         val marvelList = MarvelAPIController.dataWrapper.data.results
-        if (marvelList.size != listSize) {
-            println("dataset changed")
+
+        if (listSize != MarvelAPIController.listSize) {
+            // requested data fully fetched and the list is updated
+
             adapter.setOnlineList(marvelList)
-            listSize = marvelList.size
-            println("size: ${adapter.itemCount}")
-            println("Size: ${marvelList.size}")
+            listSize = MarvelAPIController.listSize
+            // println("dataset changed")
         }
     }
 
     fun switchLayout(view: View) {
-
-        if (gridLayoutManager.spanCount == 1) {
+        if (layoutManager.spanCount == 1) {
             // switch list to grid layout
-            gridLayoutManager.spanCount = gridCols
+            layoutManager.spanCount = gridCols
             binding.layoutButton.setImageResource(R.drawable.view_grid)
         }
         else {
             // switch grid to list layout
-            gridLayoutManager.spanCount = 1
+            layoutManager.spanCount = 1
             binding.layoutButton.setImageResource(R.drawable.view_list)
         }
         onScrollListener.switchLayout()
         adapter.notifyItemRangeChanged(0, adapter.itemCount)
-
-
-/*
-        binding.recyclerView.removeOnScrollListener(onScrollListener)
-        onScrollListener = RecyclerScrollListener(marvelAPIController, deviceMetrics, selectedLayout)
-        binding.recyclerView.addOnScrollListener(onScrollListener)*/
     }
 
-    fun calculateGridColumnCount() : Int {
+    private fun calculateGridColumnCount() : Int {
         val gridCardWidthPixels = displayMetrics.density * 125
         return (displayMetrics.widthPixels / gridCardWidthPixels).roundToInt()
-        //val displayWidth = deviceMetrics.widthPixels / deviceMetrics.density
-        //val gridCardWidth = 125
-        //return (displayWidth / gridCardWidth).roundToInt()
-    }
-
-    fun scrollToYfromListToGrid() {
-        //onScrollListener.yPos = (onScrollListener.yPos * onScrollListener.gridCardHeight / (onScrollListener.listCardHeight * calculateGridColumnCount())).roundToInt()
-        val pos = (onScrollListener.listPos / onScrollListener.listCardHeight).roundToInt()
-        println("scrolled to $pos")
-        binding.recyclerView.scrollToPosition(pos)
-
-    }
-
-    fun scrollToYfromGridToList() {
-        //onScrollListener.yPos = (onScrollListener.yPos * onScrollListener.listCardHeight * calculateGridColumnCount() / onScrollListener.gridCardHeight).roundToInt()
-        val pos = (onScrollListener.gridPos * calculateGridColumnCount() / onScrollListener.gridCardHeight).roundToInt()
-        println("scrolled to $pos")
-        binding.recyclerView.scrollToPosition(pos)
     }
 }

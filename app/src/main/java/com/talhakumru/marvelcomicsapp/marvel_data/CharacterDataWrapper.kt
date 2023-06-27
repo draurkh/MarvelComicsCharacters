@@ -1,5 +1,6 @@
 package com.talhakumru.marvelcomicsapp.marvel_data
 
+// CharacterDataWrapper format of incoming data from Marvel API
 class CharacterDataWrapper {
     val data = CharacterDataContainer()
 

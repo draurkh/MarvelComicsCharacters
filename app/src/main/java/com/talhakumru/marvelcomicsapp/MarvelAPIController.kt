@@ -7,32 +7,31 @@ import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import java.io.FileInputStream
 import java.io.IOException
 import java.math.BigInteger
 import java.net.URL
+import java.net.UnknownHostException
 import java.security.MessageDigest
 
-
+// This class contains methods for using Marvel API
 class MarvelAPIController {
-    val baseUrl = "http://gateway.marvel.com/v1/public"
-    val publicKey = "2c0eb6a33651d7791e7da24edce19abe"
-    val privateKey = "8c2f56fd47a13acb17ee127e59ebcc54552a04a7"
-    var minNumber = 0
-    val httpClient = OkHttpClient()
+    private val baseUrl = "http://gateway.marvel.com/v1/public"
+    private val pubK = "2c0eb6a33651d7791e7da24edce19abe"
+    private val privateK = "8c2f56fd47a13acb17ee127e59ebcc54552a04a7"
+    private val httpClient = OkHttpClient()
 
     companion object {
         val dataWrapper = CharacterDataWrapper()
         var listSize = 0
     }
 
-    fun getGson(filter : String) : Boolean {
-        println("getGson entered")
-
+    // download from Marvel and deserialize the data
+    fun getData(filter : String, minNumberOfFirstFetch : Int) : Boolean {
+        // println("entered getData")
         val url : URL = createRequestURL(filter)
         asyncGet(url, object: Callback {
             override fun onFailure(call: Call, e: IOException) {
-                e.printStackTrace()
+                if (e is UnknownHostException) println("Connection cannot be established. Please reconnect and restart the app")
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -40,23 +39,28 @@ class MarvelAPIController {
                     if (res.code in arrayOf(401, 405, 409)) throw IOException("Error code ${res.code} while fetching data")
                     val gson = Gson()
                     val json = res.body.source().inputStream().reader()
-                    println(json)
                     val newData : CharacterDataWrapper = gson.fromJson(json, CharacterDataWrapper::class.java)
-                    if (newData.data.results.isEmpty()) return
+                    println(listSize)
+                    if (newData.data.results.isEmpty())
+                        // no new data is downloaded with the last request
+                        return
                     dataWrapper.append(newData)
-                    if (dataWrapper.data.results.size <= minNumber) {
+                    listSize = dataWrapper.data.results.size
+                    if (listSize <= minNumberOfFirstFetch) {
+                        // at least 4 pages of data must be downloaded at the start of the application
                         println("Screen is too big")
-                        getGson("${filter}offset=${dataWrapper.data.results.size}&")
+                        getData("${filter}offset=${listSize}&", minNumberOfFirstFetch)
                     }
                 }
             }
         })
-        println("getGson exited")
+        // println("exited getData")
         return true
     }
 
+    // fetches data from internet
     fun asyncGet(url : URL, callback : Callback) : Call {
-        println("get entered")
+        // println("entered asyncGet")
         val request = Request.Builder()
             .url(url)
             .get()
@@ -70,17 +74,19 @@ class MarvelAPIController {
         // ts is the timestamp in seconds that is needed by Marvel API to evaluate the URL
         val ts = System.currentTimeMillis() / 1000
         val hash = createHash(ts)
-        return URL(baseUrl+"/characters${filters}ts=${ts}&apikey=${publicKey}&hash=${hash}")
+        return URL(baseUrl+"/characters${filters}ts=${ts}&apikey=${pubK}&hash=${hash}")
     }
 
     // hash is md5 digest of (ts+privateKey+publicKey)
     fun createHash(ts : Long) : String {
-        val bigInt = BigInteger(1, MessageDigest.getInstance("MD5").digest((ts.toString()+privateKey+publicKey).toByteArray(Charsets.UTF_8)))
+        val bigInt = BigInteger(1, MessageDigest.getInstance("MD5").digest((ts.toString()+privateK+pubK).toByteArray(Charsets.UTF_8)))
         val hash = String.format("%032x", bigInt)
-        println("ts:$ts - hash:$hash")
+        // println("ts:$ts - hash:$hash")
         return hash
     }
 
+    //
+    // deprecated methods
     /*
     fun getCharacters(filters : String) {
         println("getCharacters entered")
@@ -161,22 +167,7 @@ class MarvelAPIController {
         println("getCharacters exited")
     }
 */
-
-    /*
-    fun get(url : URL) : Response? = runBlocking {
-        println("get entered")
-        val request = Request.Builder()
-            .url(url)
-            .get()
-            .build()
-        var response : Response? = null
-        val responseTask = launch(Dispatchers.IO) {
-            response = httpClient.newCall(request).execute()
-        }
-        responseTask.join()
-        response
-    }
-
+/*
     fun alignReader(jsonReader: JsonReader) {
         try {
             jsonReader.beginObject()

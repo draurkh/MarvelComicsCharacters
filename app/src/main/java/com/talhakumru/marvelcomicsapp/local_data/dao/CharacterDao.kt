@@ -20,5 +20,5 @@ interface CharacterDao {
     fun readAll() : LiveData<List<Character>>
 
     @Query("SELECT * FROM characters WHERE id IS :id")
-    fun getCharacter(id : Int) : Character
+    suspend fun getCharacter(id : Int) : Character?
 }

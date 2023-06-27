@@ -11,14 +11,14 @@
     <ImageView
         android:id="@+id/imageGridView"
         android:layout_width="match_parent"
-        android:layout_height="140dp"/>
+        android:layout_height="140dp"
+        android:contentDescription="@string/thumbnail" />
 
     <TextView
         android:id="@+id/nameGridTextView"
         android:layout_margin="10dp"
         android:layout_width="wrap_content"
         android:layout_height="50dp"
-        android:text="Name"
         android:textAlignment="center"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -35,7 +35,8 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_margin="5dp"
-            android:text="Number of series"
+            android:paddingEnd="35dp"
+            android:paddingStart="3dp"
             android:textSize="16sp"
             android:textStyle="italic"
             android:textColor="#3C3C3C"
@@ -49,7 +50,8 @@
             android:layout_margin="3dp"
             android:src="@drawable/star_hollow"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            android:contentDescription="@string/fav_star" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
