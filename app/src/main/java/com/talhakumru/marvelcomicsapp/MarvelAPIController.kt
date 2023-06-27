@@ -16,6 +16,7 @@ import java.security.MessageDigest
 // This class contains methods for using Marvel API
 class MarvelAPIController {
     private val baseUrl = "http://gateway.marvel.com/v1/public"
+    // I have not hidden the API keys intentionally
     private val pubK = "2c0eb6a33651d7791e7da24edce19abe"
     private val privateK = "8c2f56fd47a13acb17ee127e59ebcc54552a04a7"
     private val httpClient = OkHttpClient()
@@ -40,15 +41,15 @@ class MarvelAPIController {
                     val gson = Gson()
                     val json = res.body.source().inputStream().reader()
                     val newData : CharacterDataWrapper = gson.fromJson(json, CharacterDataWrapper::class.java)
-                    println(listSize)
                     if (newData.data.results.isEmpty())
                         // no new data is downloaded with the last request
                         return
                     dataWrapper.append(newData)
                     listSize = dataWrapper.data.results.size
+                    // println("list size $listSize")
                     if (listSize <= minNumberOfFirstFetch) {
                         // at least 4 pages of data must be downloaded at the start of the application
-                        println("Screen is too big")
+                        // println("Screen is too big")
                         getData("${filter}offset=${listSize}&", minNumberOfFirstFetch)
                     }
                 }

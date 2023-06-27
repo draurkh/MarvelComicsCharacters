@@ -107,6 +107,7 @@ class MainActivity : AppCompatActivity() {
                 isNameFiltered = true
                 onScrollListener.onFilteredByName("nameStartsWith=${query}&")
                 MarvelAPIController.dataWrapper.data.results.clear()
+                adapter.notifyDataSetChanged()
                 apiController.getData("?nameStartsWith=${query}&limit=100&", minNumberOfFirstFetch)
                 mainHandler.post(updateTask)
                 return true
@@ -115,9 +116,9 @@ class MainActivity : AppCompatActivity() {
 
         searchView.setOnCloseListener(object : OnCloseListener {
             override fun onClose(): Boolean {
-                // println("searchview closed")
+                // println("searchView closed")
                 if (!isNameFiltered)
-                    // SearchView opened but closed without searching
+                    // SearchView is closed without submitting
                     return false
 
                 // disable filtering
@@ -125,6 +126,7 @@ class MainActivity : AppCompatActivity() {
                 isNameFiltered = false
                 onScrollListener.onFilteredByName("")
                 MarvelAPIController.dataWrapper.data.results.clear()
+                adapter.notifyDataSetChanged()
                 apiController.getData("?limit=100&", minNumberOfFirstFetch)
                 mainHandler.post(updateTask)
                 return false
@@ -161,7 +163,7 @@ class MainActivity : AppCompatActivity() {
         val marvelList = MarvelAPIController.dataWrapper.data.results
 
         if (listSize != MarvelAPIController.listSize) {
-            // requested data fully fetched and the list is updated
+            // requested data is fully fetched and the list is update
 
             adapter.setOnlineList(marvelList)
             listSize = MarvelAPIController.listSize

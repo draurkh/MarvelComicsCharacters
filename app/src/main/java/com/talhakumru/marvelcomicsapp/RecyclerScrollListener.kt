@@ -4,12 +4,13 @@ import android.util.DisplayMetrics
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.roundToInt
 
+// Pagination is implemented with infinite scrolling
 class RecyclerScrollListener(private val controller : MarvelAPIController, private val display : DisplayMetrics) : RecyclerView.OnScrollListener() {
 
     // list=0, grid=1
     private var mode = 0
 
-    private var listSize : Int = MarvelAPIController.listSize
+    private var listSize : Int = 0
 
     private val listCardHeight = display.density * (150 + 6)
     private val gridCardHeight = display.density * (260 + 6)
@@ -56,7 +57,7 @@ class RecyclerScrollListener(private val controller : MarvelAPIController, priva
         // println("vPos: ${pos}")
         if (pos > viewLimit && listSize != MarvelAPIController.dataWrapper.data.results.size) {
             // when the pixels scrolled amount (pos) has reached viewLimit,
-            // and the list isn't currently updating itself
+            // and when the list isn't currently updating itself
             // then fetch new data and increase viewLimit
 
             // println("$viewLimit limit is exceeded with $pos")
@@ -74,7 +75,7 @@ class RecyclerScrollListener(private val controller : MarvelAPIController, priva
             val filter = "?${addFilter}offset=${listSize+100}&limit=${100}&"
             controller.getData(filter, numOfFirstFetch)
             listSize = MarvelAPIController.dataWrapper.data.results.size
-            // println("the list has ${MarvelAPIController.dataWrapper.data.results.size}=${listSize} elements")
+            println("the list has ${MarvelAPIController.dataWrapper.data.results.size}=${listSize} elements")
         }
     }
 
@@ -102,6 +103,7 @@ class RecyclerScrollListener(private val controller : MarvelAPIController, priva
 
     fun onFilteredByName(filter : String) {
         addFilter = filter
+        listSize = 0
         listViewLimit = 60.0 * listCardHeight * timesFirstFetch
         gridViewLimit = 60.0 * gridCardHeight * timesFirstFetch / numOfGridColumns
         viewLimit = listViewLimit

@@ -321,7 +321,7 @@ class DetailsActivity : AppCompatActivity() {
                                 val nameInData = reader.nextName()
                                 if (nameInData.equals("results")) {
                                     reader.beginArray()
-                                    println("-----${mediaType} added-----")
+                                    // println("-----${mediaType} added-----")
                                     while (reader.hasNext()) {
                                         reader.beginObject()
                                         while (reader.hasNext()) {
